@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Package & Thermal Intelligence · AI 패키징·냉각 개발 방향</title>
+<meta name="description" content="AI 가속기의 패키지와 냉각을 하나의 열 경로로 보고, 패키지·냉각 개발 엔지니어가 다음 세대 개발 방향과 검증 과제를 판단하도록 돕는 기술 인사이트 사이트">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F5; --paper:#FFFFFF; --ink:#1C252C; --ink-2:#4A5862; --line:#D5DCE0;
+  --cool:#0E7C86; --cool-soft:#DCEFF0; --warm:#E0A11B; --hot:#C2361C; --hot-soft:#F7E1DC;
+  --serif:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+    --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+  --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;word-break:keep-all}
+a{color:var(--cool)}
+:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--serif);line-height:1.3;margin:0}
+h2{font-size:clamp(1.6rem,3vw,2.2rem);max-width:28ch}
+h3{font-size:1.15rem}
+p{margin:0 0 1em;max-width:68ch}
+.lead{color:var(--ink-2);font-size:1.05rem}
+
+/* nav */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.brand{font-family:var(--serif);font-weight:900;font-size:1.05rem;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:14px;height:28px;border-radius:3px;background:linear-gradient(var(--cool),var(--warm),var(--hot));display:inline-block}
+.nav ul{display:flex;gap:22px;list-style:none;margin:0;padding:0;font-size:.92rem}
+.nav ul a{color:var(--ink-2);text-decoration:none}
+.nav ul a:hover{color:var(--ink)}
+@media (max-width:820px){.nav ul{display:none}}
+
+/* hero */
+.hero{padding:56px 0 40px}
+.hero-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:start}
+@media (max-width:920px){.hero-grid{grid-template-columns:1fr}}
+.hero h1{font-size:clamp(2rem,4.6vw,3.3rem);font-weight:900;letter-spacing:-.01em;max-width:14ch}
+.hero .lead{margin-top:20px}
+.thesis{margin:28px 0 0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.thesis li{padding:14px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:7.5rem 1fr;gap:12px}
+.thesis b{font-weight:600}
+.thesis span{color:var(--ink-2)}
+
+/* heat path stack */
+.stack-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px}
+.stack-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:14px}
+.stack-head h3{font-size:1.05rem}
+.stack-head small{color:var(--ink-2)}
+.stack{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;padding-left:34px}
+.flow{position:absolute;left:6px;top:6px;bottom:6px;width:10px;border-radius:5px;background:linear-gradient(var(--cool),var(--warm) 55%,var(--hot))}
+.flow::after{content:"열 흐름";position:absolute;left:16px;top:50%;transform:translateY(-50%) rotate(-90deg);transform-origin:left center;font-size:.72rem;color:var(--ink-2);white-space:nowrap}
+.layer{font:inherit;font-size:.86rem;border:1px solid transparent;border-radius:6px;padding:7px 10px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;gap:10px;color:#fff;transition:transform .15s}
+.layer:hover{transform:translateX(3px)}
+.layer[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.layer em{font-style:normal;opacity:.85;font-size:.76rem}
+.die-row{display:flex;gap:4px;width:62%}
+.die-row .layer{flex:1}
+.detail{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;min-height:220px}
+.detail h4{margin:0 0 4px;font-family:var(--serif);font-size:1.1rem}
+.badge{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:2px}
+.b-mass{background:var(--cool-soft);color:var(--cool)}
+.b-pilot{background:#FBF0D6;color:#8A5E00}
+.b-pre{background:var(--hot-soft);color:var(--hot)}
+:root[data-theme="dark"] .b-pilot{background:#3A2F14;color:var(--warm)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .b-pilot{background:#3A2F14;color:var(--warm)}}
+.detail dl{display:grid;grid-template-columns:5.5rem 1fr;gap:6px 12px;margin:12px 0 0;font-size:.9rem}
+.detail dt{color:var(--ink-2)}
+.detail dd{margin:0}
+
+/* sections */
+section{padding:64px 0;border-top:1px solid var(--line)}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px;align-items:end}
+@media (max-width:820px){.sec-head{grid-template-columns:1fr}}
+.sec-head p{color:var(--ink-2);margin:0}
+
+/* signals */
+.signals{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+@media (max-width:900px){.signals{grid-template-columns:1fr}}
+.sig{padding:22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sig .k{font-family:var(--serif);font-size:1.9rem;font-weight:900;line-height:1.1}
+.sig .k.hot{color:var(--hot)} .sig .k.cool{color:var(--cool)}
+.sig p{font-size:.92rem;margin:10px 0 8px}
+.sig .src{font-size:.78rem;color:var(--ink-2)}
+.tag{font-size:.72rem;border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-right:6px;color:var(--ink-2)}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:.9rem}
+th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--ink-2);background:var(--bg);font-size:.82rem}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+
+/* play options */
+.plays{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.plays{grid-template-columns:1fr}}
+.play{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column}
+.play.rec{border:2px solid var(--cool)}
+.play .kind{font-size:.82rem;color:var(--ink-2);margin-bottom:6px}
+.play.rec .kind{color:var(--cool);font-weight:600}
+.play ul{padding-left:1.1em;margin:14px 0;font-size:.92rem}
+.play .gate{margin-top:auto;font-size:.84rem;border-top:1px solid var(--line);padding-top:12px;color:var(--ink-2)}
+
+/* gates */
+.gates{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:0;counter-reset:g}
+@media (max-width:960px){.gates{grid-template-columns:1fr}}
+.gates li{counter-increment:g;padding:20px 18px;border-top:4px solid var(--line);position:relative}
+.gates li:nth-child(1){border-color:var(--cool)}
+.gates li:nth-child(2){border-color:#3F9A8C}
+.gates li:nth-child(3){border-color:var(--warm)}
+.gates li:nth-child(4){border-color:#D46A2A}
+.gates li:nth-child(5){border-color:var(--hot)}
+.gates li::before{content:"Gate " counter(g);font-size:.8rem;color:var(--ink-2);display:block;margin-bottom:4px}
+.gates h3{font-size:1rem;margin-bottom:8px}
+.gates p{font-size:.88rem;margin:0 0 8px}
+.gates .kill{font-size:.82rem;color:var(--hot)}
+
+/* diagnostic */
+.diag{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px}
+.seg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.seg button{font:inherit;font-size:.9rem;padding:8px 16px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chain{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media (max-width:900px){.chain{grid-template-columns:1fr}}
+.chain div{padding:14px;border-radius:10px;background:var(--bg);font-size:.9rem}
+.chain b{display:block;font-size:.78rem;color:var(--ink-2);font-weight:500;margin-bottom:6px}
+.chain div:last-child{background:var(--hot-soft)}
+.chain div:last-child b{color:var(--hot)}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.road{grid-template-columns:1fr}}
+.road article{border-left:3px solid var(--cool);padding:4px 0 4px 18px}
+.road h3{margin-bottom:8px}
+.road ul{padding-left:1.1em;margin:0;font-size:.92rem;color:var(--ink-2)}
+.road .own{font-size:.84rem;margin-top:10px}
+
+footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:.84rem;color:var(--ink-2)}
+footer p{max-width:none}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:.95fr 1.05fr;gap:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px}
+@media (max-width:920px){.calc{grid-template-columns:1fr}}
+.calc fieldset{border:0;margin:0 0 18px;padding:0}
+.calc legend{font-family:var(--serif);font-weight:700;margin-bottom:10px;font-size:1rem}
+.field{display:grid;grid-template-columns:1fr 5.5rem;gap:4px 12px;align-items:center;margin-bottom:12px}
+.field label{font-size:.9rem}
+.field output{font-size:.9rem;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.field input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--cool)}
+.field select{grid-column:1/-1;font:inherit;font-size:.9rem;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:.9rem;margin-bottom:12px}
+.result .tj{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.2rem);font-weight:900;line-height:1}
+.result .tj small{font-size:1rem;font-weight:600;color:var(--ink-2)}
+.margin{font-size:.95rem;margin:8px 0 18px;font-weight:600}
+.margin.ok{color:var(--cool)} .margin.warn{color:var(--warm-ink)} .margin.bad{color:var(--hot)}
+.bar{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.bar span{display:block;height:100%}
+.bd{list-style:none;margin:14px 0 0;padding:0;font-size:.88rem}
+.bd li{display:grid;grid-template-columns:14px 1fr 4.5rem;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.bd li i{width:12px;height:12px;border-radius:3px;display:block}
+.bd b{text-align:right;font-variant-numeric:tabular-nums}
+.bd li.top{font-weight:600}
+.insight{margin-top:16px;padding:14px 16px;border-radius:10px;background:var(--bg);font-size:.92rem}
+.insight b{display:block;font-size:.8rem;color:var(--ink-2);font-weight:500;margin-bottom:4px}
+.assume{font-size:.8rem;color:var(--ink-2);margin-top:14px;max-width:none}
+.watch{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+@media (max-width:900px){.watch{grid-template-columns:1fr 1fr}}
+.watch div{padding:18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.watch h3{font-size:1rem;margin-bottom:6px}
+.watch p{font-size:.86rem;color:var(--ink-2);margin:0}
+:root{--warm-ink:#8A5E00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--warm-ink:#E9B44C}}
+:root[data-theme="dark"]{--warm-ink:#E9B44C}
+.watch{grid-template-columns:repeat(3,1fr)!important}
+@media (max-width:900px){.watch{grid-template-columns:1fr 1fr!important}}
+@media (max-width:560px){.watch{grid-template-columns:1fr!important}}
+.watch a{display:flex;flex-direction:column;padding:18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.watch a:hover{background:var(--bg)}
+.watch a:hover h3{color:var(--cool)}
+.watch .when{font-size:.78rem;color:var(--ink-2);margin-top:10px}
+.watch .go{font-size:.82rem;color:var(--cool);margin-top:6px;font-weight:600}
+.watch .go::after{content:" ↗"}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap nav">
+    <a class="brand" href="#top"><i aria-hidden="true"></i>Package & Thermal Intelligence</a>
+    <nav aria-label="주요 섹션"><ul>
+      <li><a href="#budget">열저항 예산</a></li>
+      <li><a href="#signals">사양 변화</a></li>
+      <li><a href="#matrix">기술 조합</a></li>
+      <li><a href="#direction">개발 방향</a></li>
+      <li><a href="#platform">플랫폼별 요구</a></li>
+      <li><a href="packaging.html">패키징 심화</a></li>
+      <li><a href="cooling.html">냉각 심화</a></li>
+      <li><a href="koolmicro.html">KoolMicro IMMC</a></li>
+    </ul></nav>
+  </div>
+</header>
+
+<main id="top">
+<div class="wrap hero">
+  <div class="hero-grid">
+    <div>
+      <h1>다음 세대의 설계 여유는 어디서 사라지는가</h1>
+      <p class="lead">칩 전력이 2 kW 안팎으로, Rack 전력이 수백 kW로 오르면서 Junction부터 냉각수까지 모든 구간의 온도 여유가 동시에 줄고 있습니다. 패키지 엔지니어가 줄인 1 °C는 냉각 엔지니어의 유량 여유가 되고, 그 반대도 마찬가지입니다. 이 사이트는 두 분야가 같은 열저항 예산을 보고 개발 방향을 정하도록 돕습니다.</p>
+      <ul class="thesis">
+        <li><b>열유속</b><span>Die 면적보다 전력이 빨리 늘어 Hot Spot 열유속이 TIM1 계면의 온도 강하를 키움</span></li>
+        <li><b>평탄도·높이</b><span>대형 기판 Warpage와 HBM 높이 한도가 TIM 두께와 Heat Spreader 구조를 제약</span></li>
+        <li><b>냉각수 온도</b><span>에너지 효율을 위해 입구 온도는 오르는데, 그만큼 패키지 안 열저항 요구는 엄격해짐</span></li>
+      </ul>
+    </div>
+    <div class="stack-card">
+      <div class="stack-head">
+        <h3>Junction에서 Grid까지, 층을 눌러 보세요</h3>
+        <small>열 경로 개념도</small>
+      </div>
+      <div class="stack" id="stack"><span class="flow" aria-hidden="true"></span></div>
+      <div class="detail" id="detail" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<section id="budget">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>열저항 예산 계산기</h2>
+      <p>칩 전력, 면적, TIM, 냉각 조건을 바꾸며 Junction 온도가 어느 구간에서 쌓이는지 확인하세요. 가장 큰 온도 강하 구간이 다음 개발 과제의 우선순위입니다. 1차원 직렬 열저항 모델로 경향을 보기 위한 도구이며 설계 값이 아닙니다.</p>
+    </div>
+    <div class="calc">
+      <div>
+        <fieldset>
+          <legend>칩 조건</legend>
+          <div class="field"><label for="p">칩 전력</label><output id="po"></output><input type="range" id="p" min="500" max="3000" step="50" value="1800"></div>
+          <div class="field"><label for="a">발열 Die 면적</label><output id="ao"></output><input type="range" id="a" min="4" max="24" step="0.5" value="16"></div>
+          <div class="field"><label for="hs">Hot Spot 집중도 (평균 대비)</label><output id="hso"></output><input type="range" id="hs" min="1" max="3" step="0.1" value="1.5"></div>
+        </fieldset>
+        <fieldset>
+          <legend>패키지 조건</legend>
+          <div class="field"><label for="tim">TIM1 소재</label><select id="tim">
+            <option value="0.10">폴리머 그리스 · 약 0.10 °C·cm²/W</option>
+            <option value="0.05">고성능 PCM·패드 · 약 0.05 °C·cm²/W</option>
+            <option value="0.02">액체금속 · 약 0.02 °C·cm²/W</option>
+            <option value="0.006">인듐 솔더 TIM · 약 0.006 °C·cm²/W</option>
+          </select></div>
+          <label class="toggle"><input type="checkbox" id="lidless"> Lid-less 구조 (Lid·TIM2 제거, Warpage로 TIM 저항 30% 증가 가정)</label>
+        </fieldset>
+        <fieldset>
+          <legend>냉각 조건</legend>
+          <div class="field"><label for="tin">냉각수 입구 온도</label><output id="tino"></output><input type="range" id="tin" min="17" max="45" step="1" value="35"></div>
+          <div class="field"><label for="q">Cold Plate 유량</label><output id="qo"></output><input type="range" id="q" min="0.5" max="4" step="0.1" value="2"></div>
+          <div class="field"><label for="rcp">Cold Plate 열저항</label><output id="rcpo"></output><input type="range" id="rcp" min="0.005" max="0.03" step="0.001" value="0.012"></div>
+          <div class="field"><label for="tmax">허용 Junction 온도</label><output id="tmaxo"></output><input type="range" id="tmax" min="85" max="115" step="1" value="105"></div>
+        </fieldset>
+      </div>
+      <div class="result" aria-live="polite">
+        <div class="tj" id="tj"></div>
+        <div class="margin" id="margin"></div>
+        <div class="bar" id="bar" role="img" aria-label="구간별 온도 상승 비율"></div>
+        <ul class="bd" id="bd"></ul>
+        <div class="insight" id="insight"></div>
+        <p class="assume">가정: 냉각수는 PG25 계열(비열 약 3,900 J/kg·K, 밀도 약 1 kg/L), 온도 상승은 평균값 기준으로 절반 반영, Lid 확산 저항 0.02 °C·cm²/W, TIM2 0.10 °C·cm²/W를 Die 면적의 3배에 적용. TIM 계면 저항 범위는 업계 발표 자료의 대표값이며 두께와 공정에 따라 크게 달라집니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="signals">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>설계 전제를 바꾸는 사양 변화</h2>
+      <p>다음 세대 개발 전에 기준값으로 삼아야 할 수치입니다. 기준 시점과 출처 등급을 함께 표기했으며, 설계 입력으로 쓰기 전에 원문과 고객 사양서로 확인하세요.</p>
+    </div>
+    <div class="signals">
+      <div class="sig"><div class="k hot">775 µm</div><p>JEDEC가 HBM4 높이 한도를 720 µm에서 올리면서 16단도 마이크로범프로 조립 가능해졌습니다. 대신 DRAM Die는 약 30 µm까지 얇아졌습니다.</p><div class="src"><span class="tag">FACT</span>2026 · 2차 · Tom's Hardware, TrendForce</div></div>
+      <div class="sig"><div class="k hot">3~6 W/m·K</div><p>폴리머 TIM의 열전도도로는 600 W급 이상 AI GPU Die에 부족하다는 분석이 확산되며 금속 계열로 전환 중입니다.</p><div class="src"><span class="tag">FACT</span>2026 · 3차 · PatSnap</div></div>
+      <div class="sig"><div class="k">5.5배 Reticle</div><p>대형 인터포저는 Reticle의 약 5.5배 면적에 로직 Chiplet과 최대 12개 HBM을 올리는 수준까지 커졌습니다.</p><div class="src"><span class="tag">FACT</span>2026 · 학술 · ASME JEP</div></div>
+      <div class="sig"><div class="k hot">200 kW 이상</div><p>Vera Rubin NVL72 Rack은 200 kW를 넘고, 차세대는 약 600 kW가 예상됩니다. 공랭 한계는 Rack당 약 30~40 kW입니다.</p><div class="src"><span class="tag">FACT</span>2026.07 · 1차·2차 · Schneider, Jabil</div></div>
+      <div class="sig"><div class="k cool">17~45 °C</div><p>차세대 Rack의 냉각수 입구 온도 범위는 온수 냉각까지 포함해 넓어졌습니다. 상한 쪽은 패키지 열저항 요구를 엄격하게 만듭니다.</p><div class="src"><span class="tag">FACT</span>2026 · 3차 · 공급망 분석</div></div>
+      <div class="sig"><div class="k">일체형 Spreader</div><p>Rubin은 분리형 Heat Spreader를 계획했으나 기판 Warpage 문제로 일체형을 임시 채택했습니다. 패키지 평탄도가 냉각 구조를 결정한 사례입니다.</p><div class="src"><span class="tag">FACT</span>2026.08 · 2차 · TrendForce 인용</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="matrix">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>패키지 구조별 열 병목과 냉각 조합</h2>
+      <p>패키지 구조가 바뀌면 열이 막히는 위치가 바뀝니다. 각 조합에서 지배적인 열저항 구간과 개발 과제를 정리했습니다. 성숙도는 양산 적용, 실증, PoC 전으로 구분합니다.</p>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>패키지 구조</th><th>지배 열저항 구간</th><th>권장 냉각 조합</th><th>성숙도</th><th>개발 과제</th><th>협업 인터페이스</th></tr></thead>
+        <tbody>
+          <tr><td>2.5D 실리콘 인터포저 + HBM</td><td>TIM1 계면, 로직 Die Hot Spot</td><td>고성능 TIM1 + Lid + Cold Plate DLC</td><td><span class="badge b-mass">양산 적용</span></td><td>TIM1 저항 저감, Hot Spot 맞춤 채널</td><td>패키지 ↔ Cold Plate 설계</td></tr>
+          <tr><td>대형 인터포저 (브리지 확장형)</td><td>Warpage로 인한 TIM 두께 불균일</td><td>면적 균일 Cold Plate + Warpage 대응 TIM</td><td><span class="badge b-mass">양산 적용</span></td><td>온도별 Warpage 예측과 TIM 두께 보상</td><td>기판 ↔ 조립 ↔ 열 설계</td></tr>
+          <tr><td>HBM 고적층 (16단)</td><td>적층 층간 열저항, Base-Die 발열</td><td>고열전도 몰드 + HBM 영역 별도 접촉 설계</td><td><span class="badge b-pilot">실증</span></td><td>Hot Spot 선택 열전도, 박막 Die Warpage 관리</td><td>메모리 ↔ 패키지</td></tr>
+          <tr><td>3D 적층 (Hybrid Bonding)</td><td>하부 Die 열 축적</td><td>양면 냉각, 칩 내장 Microfluidic 검토</td><td><span class="badge b-pre">PoC 전</span></td><td>층간 열 경로 설계, 내장 유로 공정</td><td>설계 ↔ 공정 ↔ 냉각</td></tr>
+          <tr><td>Glass Core · Panel-level</td><td>대면적 열팽창, 취성</td><td>CTE 매칭 + 대면적 균일 냉각</td><td><span class="badge b-pilot">실증</span></td><td>Glass 평탄도가 TIM 접촉에 주는 효과 정량화</td><td>기판 ↔ 패키지</td></tr>
+          <tr><td>CPO (광 집적)</td><td>광소자 온도 민감도</td><td>구역 분리 냉각, 정밀 온도 제어</td><td><span class="badge b-pilot">실증</span></td><td>광 모듈용 소형 Cold Plate, 온도 균일성</td><td>광 ↔ 패키지 ↔ 냉각</td></tr>
+          <tr><td>Rack-scale 시스템</td><td>유량 분배, CDU 응답</td><td>DLC + In-row CDU, 고밀도 구역 2-phase 검토</td><td><span class="badge b-mass">양산 적용</span></td><td>압력 강하 억제, 부하 급변 응답</td><td>냉각 ↔ 시설</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="direction">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>시간축별 개발 방향</h2>
+      <p>당장 양산에 대응할 과제, 다음 세대 인증 전에 준비할 과제, 구조가 바뀔 때를 대비할 과제를 나눴습니다. 세 트랙을 동시에 운영하되 자원 배분은 앞쪽에 둡니다.</p>
+    </div>
+    <div class="plays">
+      <article class="play">
+        <div class="kind">2026~2027 · 현 세대 최적화</div>
+        <h3>기존 구조의 열저항 줄이기</h3>
+        <ul>
+          <li>TIM1을 금속·복합 계열로 전환하며 공정 적합성 확보</li>
+          <li>Cold Plate 채널을 Hot Spot 지도에 맞춰 재설계</li>
+          <li>Warpage 실측과 해석의 상관 데이터 축적</li>
+        </ul>
+        <div class="gate">핵심 지표: TIM1 계면 저항, 같은 압력 강하에서의 Cold Plate 열저항</div>
+      </article>
+      <article class="play rec">
+        <div class="kind">2027~2028 · 차세대 준비</div>
+        <h3>패키지·냉각 공동 열 예산</h3>
+        <ul>
+          <li>냉각수 입구 온도부터 Junction까지 하나의 예산으로 관리</li>
+          <li>로직과 HBM 높이 차에 대응하는 이종 TIM과 접촉 설계</li>
+          <li>Lid-less 구조의 TIM 신뢰성과 조립 공정 검증</li>
+        </ul>
+        <div class="gate">핵심 지표: 온수 입구 조건에서의 Junction 여유, 열사이클 후 열저항 변화</div>
+      </article>
+      <article class="play">
+        <div class="kind">2029 이후 · 구조 전환 대비</div>
+        <h3>새로운 열 경로 확보</h3>
+        <ul>
+          <li>하이브리드 본딩 적층의 층간 열 경로 설계</li>
+          <li>2-phase Cold Plate와 칩 내장 유로 선행 연구</li>
+          <li>Glass Core 기판의 열·기계 특성 데이터 확보</li>
+        </ul>
+        <div class="gate">전환 신호: 칩 TDP의 단상 냉각 한계 근접, HBM5 하이브리드 본딩 확정</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="gates">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>개발·검증 단계와 통과 기준</h2>
+      <p>각 단계는 다음으로 넘어가기 위한 통과 기준과 자주 놓치는 실패 모드를 함께 갖습니다. 패키지와 냉각 팀이 같은 단계에서 같은 데이터를 보는 것이 목표입니다.</p>
+    </div>
+    <ol class="gates">
+      <li><h3>열 요구사항 정의</h3><p>TDP, Hot Spot 분포, 허용 Junction 온도, 냉각수 조건을 양 팀이 합의</p><div class="kill">실패 모드: 평균 발열만 보고 Hot Spot 누락</div></li>
+      <li><h3>모델링</h3><p>열·기계 연성 해석으로 Warpage와 열저항을 함께 예측</p><div class="kill">실패 모드: 상온 Warpage만 보고 리플로우 온도 형상 누락</div></li>
+      <li><h3>요소 시험</h3><p>TTV로 TIM 계면 저항, Cold Plate 열저항·압력 강하 측정</p><div class="kill">실패 모드: 초기값만 측정하고 열사이클 후 변화 미확인</div></li>
+      <li><h3>통합 시험</h3><p>실제 패키지와 Cold Plate, CDU 조건에서 Junction 온도와 균일성 확인</p><div class="kill">실패 모드: 단일 칩 시험 결과를 Rack 유량 분배 조건에 그대로 적용</div></li>
+      <li><h3>신뢰성·양산성</h3><p>열사이클, 고온 방치, 조립 편차를 반영한 열저항 분포 확인</p><div class="kill">실패 모드: 평균값 기준 판정으로 꼬리 분포의 과열 칩 누락</div></li>
+    </ol>
+  </div>
+</section>
+
+<section id="platform">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>플랫폼별 열 요구와 개발 우선순위</h2>
+      <p>같은 AI 칩이라도 용도와 구조에 따라 지배적인 열 병목이 다릅니다. 플랫폼을 선택하면 열 특성부터 주의할 실패 모드까지의 흐름을 볼 수 있습니다.</p>
+    </div>
+    <div class="diag">
+      <div class="seg" role="group" aria-label="플랫폼 유형" id="seg"></div>
+      <div class="chain" id="chain"></div>
+    </div>
+  </div>
+</section>
+
+<section id="watch">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>개발 방향을 읽기 위해 볼 곳</h2>
+      <p>사양 변화는 제품 발표보다 먼저 표준과 학회에서 보입니다. 팀 내 정기 리뷰 대상으로 삼을 만한 채널이며, 카드를 누르면 공식 사이트가 새 창으로 열립니다.</p>
+    </div>
+    <div class="watch">
+      <a href="https://www.ectc.net" target="_blank" rel="noopener"><h3>ECTC</h3><p>패키지 신뢰성, 본딩, TIM 공정 연구가 가장 먼저 발표되는 첨단 패키징 학회</p><span class="when">매년 5월 말 · ITherm과 공동 개최</span><span class="go">ectc.net</span></a>
+      <a href="https://www.ieee-itherm.net" target="_blank" rel="noopener"><h3>ITherm</h3><p>전자기기 열·열기계 해석, 냉각 기술 전문 학회. IEEE EPS 주관</p><span class="when">매년 5월 말 · ECTC와 공동 개최</span><span class="go">ieee-itherm.net</span></a>
+      <a href="https://www.hotchips.org" target="_blank" rel="noopener"><h3>Hot Chips</h3><p>메모리사와 가속기 설계사의 적층·패키지 로드맵이 공개되는 자리</p><span class="when">매년 8월 · 발표 자료 공개</span><span class="go">hotchips.org</span></a>
+      <a href="https://www.jedec.org" target="_blank" rel="noopener"><h3>JEDEC</h3><p>HBM 높이, 피치 등 적층 구조를 결정하는 메모리 규격</p><span class="when">상시 · 규격 개정 공지 확인</span><span class="go">jedec.org</span></a>
+      <a href="https://www.opencompute.org" target="_blank" rel="noopener"><h3>OCP</h3><p>Cold Plate, CDU, 퀵커넥터, 냉각 환경 등 데이터센터 냉각 개방형 규격</p><span class="when">상시 · 가을 Global Summit</span><span class="go">opencompute.org</span></a>
+      <a href="https://www.ashrae.org/standards-research--technology/technical-committees/section-9-0-building-applications/tc-9-9-mission-critical-facilities-data-centers-technology-spaces-and-electronic-equipment" target="_blank" rel="noopener"><h3>ASHRAE TC 9.9</h3><p>데이터센터 열 환경 가이드라인과 액체냉각 냉각수 온도 등급</p><span class="when">상시 · OCP와 협력 중</span><span class="go">ashrae.org</span></a>
+    </div>
+  </div>
+</section>
+
+<section id="sources">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>근거 원장</h2>
+      <p>홈 화면의 수치 근거입니다. 영역별 상세 근거는 패키징 심화와 냉각 심화 페이지에 있습니다.</p>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>주장</th><th>등급</th><th>기준 시점</th><th>원문</th></tr></thead>
+        <tbody>
+          <tr><td>HBM4 775 µm 높이 한도, 하이브리드 본딩 지연</td><td>2차</td><td>2026.09</td><td><a href="https://www.tomshardware.com/tech-industry/semiconductors/hybrid-bonding-roadmap-examined" target="_blank" rel="noopener">Tom's Hardware</a></td></tr>
+          <tr><td>16단 HBM4 30 µm 박막</td><td>2차</td><td>2026.01</td><td><a href="https://www.trendforce.com/news/2026/01/13/news-sk-hynix-may-stick-with-mr-muf-for-hbm4-16-high-despite-asmpt-tc-bonder-orders/" target="_blank" rel="noopener">TrendForce</a></td></tr>
+          <tr><td>폴리머 TIM 한계, 액체금속 열저항</td><td>3차</td><td>2026</td><td><a href="https://www.patsnap.com/resources/blog/articles/thermal-interface-material-strategies-for-ai-servers/" target="_blank" rel="noopener">PatSnap</a></td></tr>
+          <tr><td>인듐 솔더 TIM 특성, ECTC 2026</td><td>3차</td><td>2026.06</td><td><a href="https://www.atlaspcb.com/blog/stims-ai-chip-thermal-interface-materials-ectc-2026/" target="_blank" rel="noopener">AtlasPCB</a></td></tr>
+          <tr><td>대형 인터포저 면적과 HBM 탑재 수</td><td>학술</td><td>2026</td><td><a href="https://asmedigitalcollection.asme.org/electronicpackaging/article/148/3/031010/1225361/Current-Advances-and-Outlook-of-Advanced-Packaging" target="_blank" rel="noopener">ASME JEP</a></td></tr>
+          <tr><td>Rack 전력, 공랭 한계</td><td>2차</td><td>2026.07</td><td><a href="https://jabil.com/blog/liquid-cooling-higher-density-racks.html" target="_blank" rel="noopener">Jabil</a></td></tr>
+          <tr><td>Rubin 최대 246 kW, DLC PUE</td><td>1차</td><td>2026.07</td><td><a href="https://blog.se.com/datacenter/2026/07/28/data-center-power-density-planning-liquid-cooled-ai-data-centers-around-grid-and-power-constraints/" target="_blank" rel="noopener">Schneider Electric</a></td></tr>
+          <tr><td>냉각수 입구 온도 범위</td><td>3차</td><td>2026</td><td><a href="https://transurfing-volatility.com/vera-rubin-decoded-pt6/" target="_blank" rel="noopener">공급망 분석</a></td></tr>
+          <tr><td>일체형 Heat Spreader 채택</td><td>2차</td><td>2026.08</td><td><a href="https://iconnect007.com/article/151221/liquid-cooling-to-reach-53-of-highend-ai-infrastructure-in-2026/151218/ein" target="_blank" rel="noopener">I-Connect007</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Package & Thermal Intelligence · 공개 정보 기반 기술 인사이트입니다. 계산기와 수치는 경향 파악용이며 설계 값이나 특정 제품 사양이 아닙니다. 설계 입력으로 쓰기 전에 원문과 고객 사양서로 확인하세요. © 2026</p>
+  </div>
+</footer>
+
+<script>
+const LAYERS=[
+  {id:"facility",name:"시설 · 열 방출",sub:"Chiller · Dry cooler",w:100,t:0,status:["b-mass","양산 적용"],neck:"칠러 없는 온수 냉각으로 갈수록 냉각수 입구 온도가 올라감",opt:"Dry cooler, 폐열 회수, 온수 냉각",task:"입구 온도 상향이 칩 Junction 여유에 주는 영향 정량화",who:"냉각 ↔ 시설"},
+  {id:"cdu",name:"CDU · 배관",sub:"Coolant distribution",w:92,t:.1,status:["b-mass","양산 적용"],neck:"MW급 대형화로 부하 급변 응답과 단일 장애 영향 범위 증가",opt:"In-row·시설급 CDU, 이중화, 가상 센서",task:"부하 계단 응답 시험, 펌프 고장 전환 검증",who:"냉각 ↔ 시설"},
+  {id:"coldplate",name:"Cold Plate",sub:"Direct-to-chip",w:80,t:.25,status:["b-mass","양산 적용"],neck:"CDU 압력을 늘리지 않고 유량과 열전달을 동시에 키워야 함",opt:"미세 채널, 제트 충돌형, 2-phase",task:"Hot Spot 지도 기반 채널 배치, TTV 열저항·압력 강하 곡선",who:"패키지 ↔ 냉각"},
+  {id:"tim2",name:"TIM2",sub:"Lid ↔ Cold Plate",w:72,t:.4,status:["b-mass","양산 적용"],neck:"조립 공차와 장기 Pump-out으로 열저항 상승",opt:"상변화 소재, 인듐 포일",task:"현장 교체성과 열저항의 균형, 장기 열화 데이터",who:"패키지 ↔ 냉각"},
+  {id:"lid",name:"Lid · Heat Spreader",sub:"IHS",w:66,t:.5,status:["b-mass","양산 적용"],neck:"기판 Warpage로 분리형 구조가 보류되는 등 평탄도가 구조를 제약",opt:"일체형 Spreader, Vapor chamber Lid, Lid-less",task:"Warpage 형상에 맞춘 Lid 설계, Lid-less 전환 조건 정의",who:"기판 ↔ 패키지 ↔ 냉각"},
+  {id:"tim1",name:"TIM1",sub:"Die ↔ Lid",w:60,t:.62,status:["b-pilot","실증"],neck:"Hot Spot 열유속이 가장 큰 온도 강하를 만드는 구간",opt:"인듐 솔더, 액체금속, 이종 복합 TIM",task:"무플럭스 리플로우, 보이드 억제, 열사이클 후 저항 변화 관리",who:"패키지 ↔ 소재"},
+  {id:"die",name:"로직 Die",sub:"GPU · ASIC",w:0,t:.95,row:true,status:["b-mass","양산 적용"],neck:"TDP 2 kW 안팎 전망, Die 내부 Hot Spot",opt:"열 인지 Floorplan, 후면 전력 공급, 칩 내장 유로(연구)",task:"Hot Spot 위치 정보를 패키지·냉각 팀과 공유하는 체계",who:"설계 ↔ 패키지"},
+  {id:"hbm",name:"HBM 스택",sub:"16단 · 775 µm",w:0,t:.85,row:true,status:["b-pilot","실증"],neck:"30 µm 박막 적층으로 층간 열 확산 경로가 좁아짐",opt:"고열전도 몰드, Hot Spot 선택 소재, 하이브리드 본딩(차세대)",task:"적층 하단 Die 온도 실측, 로직과의 높이 차 대응 접촉 설계",who:"메모리 ↔ 패키지"},
+  {id:"interposer",name:"인터포저",sub:"Si · 유기 · Glass",w:88,t:.7,status:["b-pilot","실증"],neck:"Reticle 5배 이상 대형화로 Warpage와 열 불균일 증가",opt:"브리지 확장형, Glass 인터포저, Panel-level",task:"온도별 Warpage 예측 모델과 실측 상관",who:"파운드리·OSAT ↔ 패키지"},
+  {id:"substrate",name:"패키지 기판",sub:"ABF → Glass Core",w:100,t:.55,status:["b-pilot","실증"],neck:"고층 빌드업과 대형화로 CTE 불일치와 Warpage 증가",opt:"고층 빌드업, 저CTE 소재, Glass Core",task:"Glass Core 평탄도가 TIM 접촉 균일성에 주는 효과 검증",who:"기판 ↔ 패키지"}
+];
+function heat(t){const a=[14,124,134],b=[224,161,27],c=[194,54,28];const m=(p,q,s)=>p.map((v,i)=>Math.round(v+(q[i]-v)*s));return `rgb(${(t<.5?m(a,b,t/.5):m(b,c,(t-.5)/.5)).join(",")})`;}
+const stack=document.getElementById("stack"),detail=document.getElementById("detail");let rowEl=null;
+LAYERS.forEach(L=>{const b=document.createElement("button");b.className="layer";b.type="button";b.style.background=heat(L.t);b.setAttribute("aria-pressed","false");b.dataset.id=L.id;b.innerHTML=`<span>${L.name}</span><em>${L.sub}</em>`;b.addEventListener("click",()=>sel(L.id));
+ if(L.row){if(!rowEl){rowEl=document.createElement("div");rowEl.className="die-row";stack.appendChild(rowEl);}rowEl.appendChild(b);}else{b.style.width=L.w+"%";stack.appendChild(b);}});
+function sel(id){const L=LAYERS.find(x=>x.id===id);stack.querySelectorAll(".layer").forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===id?"true":"false"));
+ detail.innerHTML=`<h4>${L.name}<span class="badge ${L.status[0]}">${L.status[1]}</span></h4><dl><dt>설계 한계</dt><dd>${L.neck}</dd><dt>기술 옵션</dt><dd>${L.opt}</dd><dt>개발 과제</dt><dd>${L.task}</dd><dt>인터페이스</dt><dd>${L.who}</dd></dl>`;}
+sel("tim1");
+
+/* thermal budget calculator */
+const $=id=>document.getElementById(id);
+const COLORS={fluid:"#6FB7BE",cp:"#0E7C86",tim2:"#E0A11B",lid:"#D98A2B",tim1:"#C2361C"};
+const NAMES={fluid:"냉각수 온도 상승",cp:"Cold Plate",tim2:"TIM2",lid:"Lid 확산",tim1:"TIM1 (Hot Spot 기준)"};
+const TIPS={
+ fluid:"냉각수 자체의 온도 상승이 가장 큽니다. 유량을 늘리거나 칩당 유량 분배를 개선하는 것이 우선이며, 이는 퀵커넥터와 매니폴드의 압력 손실 개선과 연결됩니다.",
+ cp:"Cold Plate 열저항이 지배적입니다. 미세 채널 고도화와 Hot Spot 위치에 맞춘 채널 배치가 가장 효과적인 개발 방향입니다.",
+ tim2:"TIM2 구간이 큽니다. Lid와 Cold Plate 사이 접촉 압력과 소재를 재검토하거나, 조건이 맞으면 Lid-less 구조를 검토할 수 있습니다.",
+ lid:"Lid 확산 저항이 큽니다. Vapor chamber Lid나 Heat Spreader 두께·소재 최적화를 검토하세요.",
+ tim1:"TIM1 계면이 가장 큰 병목입니다. Hot Spot 열유속이 높아 폴리머 계열로는 한계이며, 금속 TIM 전환과 보이드·Warpage 관리가 우선 과제입니다."
+};
+function fmt(v,d=1){return v.toFixed(d);}
+function calc(){
+ const P=+$("p").value,A=+$("a").value,HS=+$("hs").value,Rt=+$("tim").value,lidless=$("lidless").checked,Tin=+$("tin").value,Q=+$("q").value,Rcp=+$("rcp").value,Tmax=+$("tmax").value;
+ $("po").textContent=P+" W";$("ao").textContent=A+" cm²";$("hso").textContent=HS.toFixed(1)+"배";$("tino").textContent=Tin+" °C";$("qo").textContent=Q.toFixed(1)+" L/min";$("rcpo").textContent=Rcp.toFixed(3)+" °C/W";$("tmaxo").textContent=Tmax+" °C";
+ const qflux=P*HS/A;
+ const d={};
+ d.fluid=P/((Q/60)*3900)/2;
+ d.cp=P*Rcp;
+ if(lidless){d.tim2=0;d.lid=0;d.tim1=qflux*Rt*1.3;}
+ else{d.tim2=P*0.10/(A*3);d.lid=qflux*0.02;d.tim1=qflux*Rt;}
+ const sum=Object.values(d).reduce((a,b)=>a+b,0),Tj=Tin+sum,mg=Tmax-Tj;
+ $("tj").innerHTML=`${fmt(Tj)} <small>°C 예상 Junction 온도</small>`;
+ const m=$("margin");m.className="margin "+(mg>=10?"ok":mg>=0?"warn":"bad");
+ m.textContent=mg>=0?`허용 온도까지 여유 ${fmt(mg)} °C · Hot Spot 열유속 ${fmt(qflux,0)} W/cm²`:`허용 온도를 ${fmt(-mg)} °C 초과 · Hot Spot 열유속 ${fmt(qflux,0)} W/cm²`;
+ const keys=Object.keys(d).filter(k=>d[k]>0);
+ const top=keys.reduce((a,b)=>d[a]>d[b]?a:b);
+ $("bar").innerHTML=keys.map(k=>`<span style="width:${d[k]/sum*100}%;background:${COLORS[k]}" title="${NAMES[k]}"></span>`).join("");
+ $("bd").innerHTML=`<li><i style="background:transparent;border:1px solid var(--line)"></i><span>냉각수 입구 온도</span><b>${fmt(Tin)} °C</b></li>`+keys.map(k=>`<li class="${k===top?"top":""}"><i style="background:${COLORS[k]}"></i><span>${NAMES[k]}</span><b>+${fmt(d[k])} °C</b></li>`).join("");
+ $("insight").innerHTML=`<b>가장 큰 구간: ${NAMES[top]} (${fmt(d[top]/sum*100,0)}%)</b>${TIPS[top]}`;
+}
+["p","a","hs","tim","lidless","tin","q","rcp","tmax"].forEach(id=>$(id).addEventListener("input",calc));
+calc();
+
+/* platform diagnostic */
+const PLAT={
+ "학습용 GPU Rack":["최대 TDP, 장시간 지속 부하, 대형 인터포저와 다수 HBM","TIM1 계면과 Cold Plate, Rack 유량 분배","금속 TIM, Hot Spot 맞춤 Cold Plate, 대구경 퀵커넥터","Junction 여유, 칩 간 온도 편차, 압력 강하","단일 칩 시험 결과를 Rack 유량 분배 조건에 그대로 적용"],
+ "추론용 ASIC":["중간 TDP, 부하 변동이 크고 고객별 사양이 다양","부하 급변 시 온도 응답, 패키지 크기 다양성","표준화된 Cold Plate 플랫폼, 빠른 응답의 CDU 제어","온도 변동 폭, 설계 재사용률","최대 부하만 보고 과도 응답과 열사이클 피로 누락"],
+ "HBM 고적층":["30 µm 박막 16단, Base-Die 발열 증가, 높이 한도 775 µm","적층 층간 열저항과 하단 Die","고열전도 몰드, Hot Spot 선택 소재, 높이 차 대응 접촉 설계","하단 Die 온도, 로직 대비 온도 차","적층 평균 온도로 판정해 Base-Die 국부 과열 누락"],
+ "CPO 스위치":["광소자의 온도 민감도, 전기 칩과 광 모듈 혼재","광 모듈 온도 균일성","구역 분리 냉각, 광 모듈용 소형 Cold Plate","광 모듈 온도 편차, 파장 안정성","전기 칩 기준 냉각 설계를 광소자에 그대로 적용"]
+};
+const seg=$("seg"),chain=$("chain"),LB=["열 특성","지배 열저항 구간","우선 개발 기술","핵심 지표","주의할 실패 모드"];
+Object.keys(PLAT).forEach((k,i)=>{const b=document.createElement("button");b.type="button";b.textContent=k;b.setAttribute("aria-pressed",i===0?"true":"false");b.addEventListener("click",()=>{seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");show(k);});seg.appendChild(b);});
+function show(k){chain.innerHTML=PLAT[k].map((v,i)=>`<div><b>${LB[i]}</b>${v}</div>`).join("");}
+show("학습용 GPU Rack");
+</script>
+</body>
+</html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KoolMicro IMMC 개발 방향 | Package & Thermal Intelligence</title>
+<meta name="description" content="KoolMicro 동료를 위한 IMMC 단계별 엔지니어링 과제, 구조별 열저항 비교 계산기, 칩·패키지 통합 냉각 기술 경쟁 구도">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F5; --paper:#FFFFFF; --ink:#1C252C; --ink-2:#4A5862; --line:#D5DCE0;
+  --cool:#0E7C86; --cool-soft:#DCEFF0; --warm:#E0A11B; --hot:#C2361C; --hot-soft:#F7E1DC;
+  --serif:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+    --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+  --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;word-break:keep-all}
+a{color:var(--cool)}
+:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--serif);line-height:1.3;margin:0}
+h2{font-size:clamp(1.6rem,3vw,2.2rem);max-width:28ch}
+h3{font-size:1.15rem}
+p{margin:0 0 1em;max-width:68ch}
+.lead{color:var(--ink-2);font-size:1.05rem}
+
+/* nav */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.brand{font-family:var(--serif);font-weight:900;font-size:1.05rem;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:14px;height:28px;border-radius:3px;background:linear-gradient(var(--cool),var(--warm),var(--hot));display:inline-block}
+.nav ul{display:flex;gap:22px;list-style:none;margin:0;padding:0;font-size:.92rem}
+.nav ul a{color:var(--ink-2);text-decoration:none}
+.nav ul a:hover{color:var(--ink)}
+@media (max-width:820px){.nav ul{display:none}}
+
+/* hero */
+.hero{padding:56px 0 40px}
+.hero-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:start}
+@media (max-width:920px){.hero-grid{grid-template-columns:1fr}}
+.hero h1{font-size:clamp(2rem,4.6vw,3.3rem);font-weight:900;letter-spacing:-.01em;max-width:14ch}
+.hero .lead{margin-top:20px}
+.thesis{margin:28px 0 0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.thesis li{padding:14px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:7.5rem 1fr;gap:12px}
+.thesis b{font-weight:600}
+.thesis span{color:var(--ink-2)}
+
+/* heat path stack */
+.stack-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px}
+.stack-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:14px}
+.stack-head h3{font-size:1.05rem}
+.stack-head small{color:var(--ink-2)}
+.stack{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;padding-left:34px}
+.flow{position:absolute;left:6px;top:6px;bottom:6px;width:10px;border-radius:5px;background:linear-gradient(var(--cool),var(--warm) 55%,var(--hot))}
+.flow::after{content:"열 흐름";position:absolute;left:16px;top:50%;transform:translateY(-50%) rotate(-90deg);transform-origin:left center;font-size:.72rem;color:var(--ink-2);white-space:nowrap}
+.layer{font:inherit;font-size:.86rem;border:1px solid transparent;border-radius:6px;padding:7px 10px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;gap:10px;color:#fff;transition:transform .15s}
+.layer:hover{transform:translateX(3px)}
+.layer[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.layer em{font-style:normal;opacity:.85;font-size:.76rem}
+.die-row{display:flex;gap:4px;width:62%}
+.die-row .layer{flex:1}
+.detail{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;min-height:220px}
+.detail h4{margin:0 0 4px;font-family:var(--serif);font-size:1.1rem}
+.badge{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:2px}
+.b-mass{background:var(--cool-soft);color:var(--cool)}
+.b-pilot{background:#FBF0D6;color:#8A5E00}
+.b-pre{background:var(--hot-soft);color:var(--hot)}
+:root[data-theme="dark"] .b-pilot{background:#3A2F14;color:var(--warm)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .b-pilot{background:#3A2F14;color:var(--warm)}}
+.detail dl{display:grid;grid-template-columns:5.5rem 1fr;gap:6px 12px;margin:12px 0 0;font-size:.9rem}
+.detail dt{color:var(--ink-2)}
+.detail dd{margin:0}
+
+/* sections */
+section{padding:64px 0;border-top:1px solid var(--line)}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px;align-items:end}
+@media (max-width:820px){.sec-head{grid-template-columns:1fr}}
+.sec-head p{color:var(--ink-2);margin:0}
+
+/* signals */
+.signals{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+@media (max-width:900px){.signals{grid-template-columns:1fr}}
+.sig{padding:22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sig .k{font-family:var(--serif);font-size:1.9rem;font-weight:900;line-height:1.1}
+.sig .k.hot{color:var(--hot)} .sig .k.cool{color:var(--cool)}
+.sig p{font-size:.92rem;margin:10px 0 8px}
+.sig .src{font-size:.78rem;color:var(--ink-2)}
+.tag{font-size:.72rem;border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-right:6px;color:var(--ink-2)}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:.9rem}
+th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--ink-2);background:var(--bg);font-size:.82rem}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+
+/* play options */
+.plays{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.plays{grid-template-columns:1fr}}
+.play{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column}
+.play.rec{border:2px solid var(--cool)}
+.play .kind{font-size:.82rem;color:var(--ink-2);margin-bottom:6px}
+.play.rec .kind{color:var(--cool);font-weight:600}
+.play ul{padding-left:1.1em;margin:14px 0;font-size:.92rem}
+.play .gate{margin-top:auto;font-size:.84rem;border-top:1px solid var(--line);padding-top:12px;color:var(--ink-2)}
+
+/* gates */
+.gates{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:0;counter-reset:g}
+@media (max-width:960px){.gates{grid-template-columns:1fr}}
+.gates li{counter-increment:g;padding:20px 18px;border-top:4px solid var(--line);position:relative}
+.gates li:nth-child(1){border-color:var(--cool)}
+.gates li:nth-child(2){border-color:#3F9A8C}
+.gates li:nth-child(3){border-color:var(--warm)}
+.gates li:nth-child(4){border-color:#D46A2A}
+.gates li:nth-child(5){border-color:var(--hot)}
+.gates li::before{content:"Gate " counter(g);font-size:.8rem;color:var(--ink-2);display:block;margin-bottom:4px}
+.gates h3{font-size:1rem;margin-bottom:8px}
+.gates p{font-size:.88rem;margin:0 0 8px}
+.gates .kill{font-size:.82rem;color:var(--hot)}
+
+/* diagnostic */
+.diag{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px}
+.seg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.seg button{font:inherit;font-size:.9rem;padding:8px 16px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chain{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media (max-width:900px){.chain{grid-template-columns:1fr}}
+.chain div{padding:14px;border-radius:10px;background:var(--bg);font-size:.9rem}
+.chain b{display:block;font-size:.78rem;color:var(--ink-2);font-weight:500;margin-bottom:6px}
+.chain div:last-child{background:var(--hot-soft)}
+.chain div:last-child b{color:var(--hot)}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.road{grid-template-columns:1fr}}
+.road article{border-left:3px solid var(--cool);padding:4px 0 4px 18px}
+.road h3{margin-bottom:8px}
+.road ul{padding-left:1.1em;margin:0;font-size:.92rem;color:var(--ink-2)}
+.road .own{font-size:.84rem;margin-top:10px}
+
+footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:.84rem;color:var(--ink-2)}
+footer p{max-width:none}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:.95fr 1.05fr;gap:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px}
+@media (max-width:920px){.calc{grid-template-columns:1fr}}
+.calc fieldset{border:0;margin:0 0 18px;padding:0}
+.calc legend{font-family:var(--serif);font-weight:700;margin-bottom:10px;font-size:1rem}
+.field{display:grid;grid-template-columns:1fr 5.5rem;gap:4px 12px;align-items:center;margin-bottom:12px}
+.field label{font-size:.9rem}
+.field output{font-size:.9rem;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.field input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--cool)}
+.field select{grid-column:1/-1;font:inherit;font-size:.9rem;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:.9rem;margin-bottom:12px}
+.result .tj{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.2rem);font-weight:900;line-height:1}
+.result .tj small{font-size:1rem;font-weight:600;color:var(--ink-2)}
+.margin{font-size:.95rem;margin:8px 0 18px;font-weight:600}
+.margin.ok{color:var(--cool)} .margin.warn{color:var(--warm-ink)} .margin.bad{color:var(--hot)}
+.bar{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.bar span{display:block;height:100%}
+.bd{list-style:none;margin:14px 0 0;padding:0;font-size:.88rem}
+.bd li{display:grid;grid-template-columns:14px 1fr 4.5rem;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.bd li i{width:12px;height:12px;border-radius:3px;display:block}
+.bd b{text-align:right;font-variant-numeric:tabular-nums}
+.bd li.top{font-weight:600}
+.insight{margin-top:16px;padding:14px 16px;border-radius:10px;background:var(--bg);font-size:.92rem}
+.insight b{display:block;font-size:.8rem;color:var(--ink-2);font-weight:500;margin-bottom:4px}
+.assume{font-size:.8rem;color:var(--ink-2);margin-top:14px;max-width:none}
+.watch{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+@media (max-width:900px){.watch{grid-template-columns:1fr 1fr}}
+.watch div{padding:18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.watch h3{font-size:1rem;margin-bottom:6px}
+.watch p{font-size:.86rem;color:var(--ink-2);margin:0}
+:root{--warm-ink:#8A5E00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--warm-ink:#E9B44C}}
+:root[data-theme="dark"]{--warm-ink:#E9B44C}
+
+:root{
+  --bg:#F2F4F5; --paper:#FFFFFF; --ink:#1C252C; --ink-2:#4A5862; --line:#D5DCE0;
+  --cool:#0E7C86; --cool-soft:#DCEFF0; --warm:#E0A11B; --warm-soft:#FBF0D6; --warm-ink:#8A5E00; --hot:#C2361C; --hot-soft:#F7E1DC;
+  --sub:#5B4B8A; --sub-soft:#E8E4F3;
+  --serif:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+    --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --warm-soft:#3A2F14; --warm-ink:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+    --sub:#A594D9; --sub-soft:#2A2440;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+  --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --warm-soft:#3A2F14; --warm-ink:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+  --sub:#A594D9; --sub-soft:#2A2440;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;word-break:keep-all}
+a{color:var(--cool)}
+:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--serif);line-height:1.3;margin:0}
+h2{font-size:clamp(1.55rem,3vw,2.1rem);max-width:30ch}
+h3{font-size:1.15rem}
+p{margin:0 0 1em;max-width:68ch}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.brand{font-family:var(--serif);font-weight:900;font-size:1.05rem;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:14px;height:28px;border-radius:3px;background:linear-gradient(var(--cool),var(--warm),var(--hot));display:inline-block}
+.crumb{font-size:.9rem;color:var(--ink-2)}
+.crumb a{color:var(--ink-2)}
+.subnav{display:flex;gap:6px;overflow-x:auto;padding:8px 0 10px}
+.subnav a{flex:none;font-size:.88rem;padding:6px 14px;border-radius:99px;border:1px solid var(--line);color:var(--ink);text-decoration:none;background:var(--paper)}
+.subnav a:hover{border-color:var(--ink-2)}
+
+.hero{padding:48px 0 36px}
+.hero h1{font-size:clamp(1.9rem,4.2vw,3rem);font-weight:900;max-width:18ch}
+.hero .lead{color:var(--ink-2);font-size:1.05rem;margin-top:18px}
+.q3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:30px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+@media (max-width:860px){.q3{grid-template-columns:1fr}}
+.q3 a{padding:20px 22px;text-decoration:none;color:var(--ink);border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:block}
+.q3 a:hover{background:var(--bg)}
+.q3 .t{font-size:.84rem;font-weight:600}
+.q3 .t.s{color:var(--sub)} .q3 .t.m{color:var(--warm-ink)} .q3 .t.h{color:var(--hot)}
+.q3 p{font-family:var(--serif);font-size:1.08rem;font-weight:700;margin:6px 0 0;line-height:1.45}
+
+section{padding:60px 0;border-top:1px solid var(--line)}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:28px;align-items:end}
+@media (max-width:860px){.sec-head{grid-template-columns:1fr}}
+.sec-head p{color:var(--ink-2);margin:0}
+
+/* swimlane roadmap */
+.lane-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+.lanes{display:grid;grid-template-columns:8.5rem repeat(5,minmax(150px,1fr));min-width:920px}
+.lanes .yr{padding:12px 14px;font-weight:600;font-size:.9rem;border-bottom:1px solid var(--line);color:var(--ink-2)}
+.lanes .yr.now{color:var(--ink)}
+.lanes .lname{padding:16px 14px;font-family:var(--serif);font-weight:700;border-bottom:1px solid var(--line);border-right:1px solid var(--line);display:flex;align-items:flex-start}
+.lanes .cell{padding:10px 8px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.lanes .cell.last,.lanes .lname.last{border-bottom:0}
+.ev{font:inherit;font-size:.82rem;line-height:1.4;text-align:left;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;color:var(--ink)}
+.ev.fact{background:var(--cool-soft);border-color:var(--cool)}
+.ev.plan{background:var(--warm-soft);border-color:var(--warm)}
+.ev.hyp{background:transparent;border:1px dashed var(--ink-2)}
+.ev[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.82rem;color:var(--ink-2);margin:14px 0 0}
+.legend span::before{content:"";display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:6px;vertical-align:0}
+.legend .f::before{background:var(--cool-soft);border:1px solid var(--cool)}
+.legend .p::before{background:var(--warm-soft);border:1px solid var(--warm)}
+.legend .h::before{border:1px dashed var(--ink-2)}
+.evdetail{margin-top:16px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 20px;min-height:120px}
+.evdetail h4{font-size:1.05rem;margin-bottom:6px}
+.evdetail .src{font-size:.8rem;color:var(--ink-2);margin:8px 0 0}
+
+/* track */
+.track-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px}
+@media (max-width:920px){.track-grid{grid-template-columns:1fr}}
+.qbox{border-left:4px solid var(--sub);padding:4px 0 4px 18px;margin-bottom:26px}
+.qbox.m{border-color:var(--warm)} .qbox.h{border-color:var(--hot)}
+.qbox b{display:block;font-size:.84rem;color:var(--ink-2);font-weight:500;margin-bottom:4px}
+.qbox p{font-family:var(--serif);font-size:1.2rem;font-weight:700;margin:0;line-height:1.45}
+.facts{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.facts li{padding:13px 0;border-bottom:1px solid var(--line);font-size:.93rem}
+.facts .meta{display:block;font-size:.76rem;color:var(--ink-2);margin-top:3px}
+.tag{font-size:.7rem;border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-right:6px;color:var(--ink-2);font-weight:600}
+.side{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px}
+.side h3{margin-bottom:12px}
+.side dl{margin:0;display:grid;gap:14px}
+.side dt{font-size:.82rem;color:var(--ink-2)}
+.side dd{margin:2px 0 0;font-size:.93rem}
+.side .kill{border-top:1px solid var(--line);padding-top:14px;margin-top:4px}
+.side .kill dt{color:var(--hot)}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);margin-top:26px}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:.89rem}
+th,td{padding:12px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--ink-2);background:var(--bg);font-size:.8rem}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.badge{display:inline-block;font-size:.74rem;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.b-mass{background:var(--cool-soft);color:var(--cool)}
+.b-pilot{background:var(--warm-soft);color:var(--warm-ink)}
+.b-pre{background:var(--hot-soft);color:var(--hot)}
+
+/* coupling matrix */
+.couple{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.couple{grid-template-columns:1fr}}
+.couple article{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px}
+.pair{font-size:.84rem;font-weight:600;margin-bottom:8px}
+.pair .s{color:var(--sub)} .pair .m{color:var(--warm-ink)} .pair .h{color:var(--hot)}
+.couple h3{font-size:1.05rem;margin-bottom:10px}
+.couple p{font-size:.92rem;color:var(--ink-2)}
+.couple .act{font-size:.88rem;border-top:1px solid var(--line);padding-top:10px;margin:0;color:var(--ink)}
+
+/* one pager */
+.onepager{background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:28px}
+.op-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:18px}
+@media (max-width:900px){.op-grid{grid-template-columns:1fr}}
+.op-grid h4{font-size:.95rem;margin-bottom:6px}
+.op-grid p,.op-grid ul{font-size:.9rem;margin:0}
+.op-grid ul{padding-left:1.1em}
+.rec{font-family:var(--serif);font-size:1.3rem;font-weight:700;max-width:40ch;line-height:1.45;margin:0}
+
+
+/* value chain map */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.filters button{font:inherit;font-size:.86rem;padding:6px 14px;border-radius:99px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.vc-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+.vc{display:grid;grid-template-columns:9.5rem repeat(4,minmax(170px,1fr));min-width:900px}
+.vc .hd{padding:12px 14px;font-size:.84rem;font-weight:600;color:var(--ink-2);border-bottom:1px solid var(--line);background:var(--bg)}
+.vc .hd small{display:block;font-weight:400;font-size:.75rem}
+.vc .seg-name{padding:16px 14px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.vc .seg-name b{font-family:var(--serif);display:block}
+.vc .seg-name span{font-size:.78rem;color:var(--ink-2);display:block;margin-top:4px;line-height:1.45}
+.vc .slot{padding:10px 8px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.vc .row-last{border-bottom:0}
+.co{font:inherit;font-size:.83rem;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.co abbr{font-size:.68rem;font-weight:600;text-decoration:none;padding:0 4px;border-radius:3px;background:var(--paper);border:1px solid var(--line);color:var(--ink-2)}
+.co.kr{border-color:var(--cool)} .co.kr abbr{color:var(--cool);border-color:var(--cool)}
+.co.dim{opacity:.25}
+.co[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.co .q{font-size:.7rem;color:var(--ink-2)}
+.codetail{margin-top:16px;display:grid;grid-template-columns:1.2fr .8fr;gap:22px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+@media (max-width:860px){.codetail{grid-template-columns:1fr}}
+.codetail h4{font-size:1.1rem;margin-bottom:4px}
+.codetail .sub{font-size:.84rem;color:var(--ink-2);margin-bottom:10px}
+.codetail dl{margin:0;display:grid;grid-template-columns:5.5rem 1fr;gap:6px 12px;font-size:.9rem}
+.codetail dt{color:var(--ink-2)} .codetail dd{margin:0}
+.codetail .impl{border-left:3px solid var(--cool);padding-left:14px;font-size:.92rem}
+.codetail .impl b{display:block;font-size:.8rem;color:var(--cool);margin-bottom:4px}
+.conc{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:26px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+@media (max-width:900px){.conc{grid-template-columns:1fr}}
+.conc div{padding:18px 20px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.conc h4{font-size:1rem;margin-bottom:6px}
+.conc .lvl{font-size:.78rem;font-weight:600;margin-bottom:8px;display:inline-block;padding:2px 8px;border-radius:99px}
+.lvl.hi{background:var(--hot-soft);color:var(--hot)} .lvl.md{background:var(--warm-soft);color:var(--warm-ink)} .lvl.lo{background:var(--cool-soft);color:var(--cool)}
+.conc p{font-size:.88rem;color:var(--ink-2);margin:0}
+.note{font-size:.82rem;color:var(--ink-2);margin-top:12px}
+footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:.84rem;color:var(--ink-2)}
+footer p{max-width:none}
+
+.cmp{margin-top:6px}
+.cmp .row{display:grid;grid-template-columns:11rem 1fr 5rem;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.cmp .row:last-child{border-bottom:0}
+.cmp .nm{font-size:.88rem;font-weight:600;line-height:1.35}
+.cmp .nm small{display:block;font-weight:400;color:var(--ink-2);font-size:.76rem}
+.cmp .tr{display:flex;height:24px;border-radius:6px;overflow:hidden;background:var(--bg)}
+.cmp .tr span{height:100%}
+.cmp .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.cmp .v.bad{color:var(--hot)} .cmp .v.ok{color:var(--cool)} .cmp .v.warn{color:var(--warm-ink)}
+.cmp .row.km .nm{color:var(--cool)}
+.legend2{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--ink-2);margin-top:12px}
+.legend2 i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tier{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.tier{grid-template-columns:1fr}}
+.tier article{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px}
+.tier .lv{font-size:.82rem;font-weight:600;color:var(--cool);margin-bottom:4px}
+.tier h3{margin-bottom:10px}
+.tier dl{margin:0;display:grid;gap:10px;font-size:.9rem}
+.tier dt{font-size:.78rem;color:var(--ink-2)} .tier dd{margin:2px 0 0}
+.tier .removed{font-size:.84rem;background:var(--cool-soft);color:var(--ink);padding:8px 10px;border-radius:8px;margin-bottom:12px}
+.hdr-note{font-size:.84rem;color:var(--ink-2);border-left:3px solid var(--warm);padding-left:12px;margin-top:18px;max-width:80ch}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="nav">
+      <a class="brand" href="index.html"><i aria-hidden="true"></i>Package & Thermal Intelligence</a>
+      <span class="crumb"><a href="index.html">홈</a> / KoolMicro IMMC</span>
+    </div>
+    <nav class="subnav" aria-label="페이지 내 이동">
+      <a href="#path">열 경로 비교</a>
+      <a href="#compare">구조별 계산</a>
+      <a href="#tiers">IMMC 단계별 과제</a>
+      <a href="#landscape">기술 경쟁 구도</a>
+      <a href="#coupling">패키지 연결</a>
+      <a href="#agenda">개발 과제</a>
+      <a href="#sources">근거</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap hero">
+  <h1>열 경로의 층을 하나씩 없애는 기술, IMMC</h1>
+  <p class="lead">Cold Plate는 Lid 바깥에서 열을 받지만, IMMC는 매니폴드와 마이크로채널을 Die에 점점 더 가까이 가져가 TIM과 Lid 구간을 제거합니다. IMMC-1은 기존 Cold Plate를 대체하고, IMMC-2는 패키지 안으로, IMMC-3는 웨이퍼 안으로 들어갑니다. 단계가 올라갈수록 열저항은 줄지만 풀어야 할 문제는 냉각에서 패키징과 반도체 공정으로 옮겨갑니다. KoolMicro 동료들이 각 단계의 기술 과제와 주변 기술 흐름을 한눈에 보도록 정리했습니다.</p>
+  <div class="q3">
+    <a href="#tiers"><span class="t s">IMMC-1</span><p>Rack 유량 조건과 양산 편차 안에서 실험실 성능을 얼마나 재현할 수 있는가</p></a>
+    <a href="#tiers"><span class="t m">IMMC-2</span><p>패키지 조립 공정과 Warpage 속에서 누수 없는 접합과 신뢰성을 확보할 수 있는가</p></a>
+    <a href="#tiers"><span class="t h">IMMC-3</span><p>후면 전력 공급, 실리콘 강도, 유로 막힘을 동시에 만족하는 웨이퍼 공정이 성립하는가</p></a>
+  </div>
+  <p class="hdr-note">IMMC 성능 수치는 KoolMicro가 공개한 자료와 외부 보도를 기준으로 하며, 보도에 따르면 독립 기관의 검증 결과는 아직 공개되지 않았습니다. 사내 실측 데이터로 교체해 사용하세요.</p>
+</div>
+
+<section id="path">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>냉각 구조별로 사라지는 열 경로</h2>
+      <p>칩 Junction에서 냉각수까지 거치는 층을 구조별로 비교했습니다. 층이 하나 사라질 때마다 그 층의 열저항과 조립 편차도 함께 사라집니다.</p>
+    </div>
+    <div class="tbl-wrap" style="margin-top:0">
+      <table>
+        <thead><tr><th>구조</th><th>TIM1</th><th>Lid</th><th>TIM2</th><th>냉각 구조 위치</th><th>새로 생기는 계면</th><th>성숙도</th></tr></thead>
+        <tbody>
+          <tr><td>Cold Plate + Lid (현재 주류)</td><td>있음</td><td>있음</td><td>있음</td><td>Lid 위</td><td>없음</td><td><span class="badge b-mass">양산 적용</span></td></tr>
+          <tr><td>Lid-less Cold Plate</td><td>있음 (Warpage 흡수 부담)</td><td>없음</td><td>없음</td><td>Die 위 직접</td><td>없음</td><td><span class="badge b-pilot">실증</span></td></tr>
+          <tr><td>IMMC-1 (Discrete)</td><td>있음</td><td>있음</td><td>있음</td><td>Lid 위, 매니폴드로 유로 단축</td><td>없음, 기존 Cold Plate 교체</td><td><span class="badge b-pilot">실증</span></td></tr>
+          <tr><td>IMMC-2 (패키지 통합)</td><td>접합층으로 대체</td><td>없음</td><td>없음</td><td>패키지 내부, Die 바로 위</td><td>Die ↔ 냉각 구조 접합, 패키지 밀봉</td><td><span class="badge b-pre">PoC 전</span></td></tr>
+          <tr><td>IMMC-3 (칩 내장)</td><td>없음</td><td>없음</td><td>없음</td><td>실리콘 후면 내부</td><td>유로 밀봉층, 유체 인터페이스</td><td><span class="badge b-pre">PoC 전</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>같은 칩 조건에서 구조별 Junction 온도</h2>
+      <p>칩 조건과 냉각 조건을 바꾸면 다섯 가지 구조의 예상 Junction 온도가 동시에 계산됩니다. 어느 조건에서 IMMC 단계가 넘어가야 하는지, 각 구조의 한계 전력이 어디인지 보는 데 쓰세요. 1차원 열저항 모델이며 설계 값이 아닙니다.</p>
+    </div>
+    <div class="calc">
+      <div>
+        <fieldset>
+          <legend>칩 조건</legend>
+          <div class="field"><label for="p">칩 전력</label><output id="po"></output><input type="range" id="p" min="500" max="6000" step="100" value="2500"></div>
+          <div class="field"><label for="a">발열 Die 면적</label><output id="ao"></output><input type="range" id="a" min="4" max="24" step="0.5" value="16"></div>
+          <div class="field"><label for="hs">Hot Spot 집중도 (평균 대비)</label><output id="hso"></output><input type="range" id="hs" min="1" max="3" step="0.1" value="1.5"></div>
+          <div class="field"><label for="tim">기존 구조의 TIM1 소재</label><select id="tim">
+            <option value="0.10">폴리머 그리스 · 약 0.10 °C·cm²/W</option>
+            <option value="0.05">고성능 PCM·패드 · 약 0.05 °C·cm²/W</option>
+            <option value="0.02">액체금속 · 약 0.02 °C·cm²/W</option>
+            <option value="0.006" selected>인듐 솔더 TIM · 약 0.006 °C·cm²/W</option>
+          </select></div>
+        </fieldset>
+        <fieldset>
+          <legend>냉각 조건</legend>
+          <div class="field"><label for="tin">냉각수 입구 온도</label><output id="tino"></output><input type="range" id="tin" min="17" max="60" step="1" value="40"></div>
+          <div class="field"><label for="q">칩당 유량</label><output id="qo"></output><input type="range" id="q" min="0.5" max="4" step="0.1" value="2"></div>
+          <div class="field"><label for="tmax">허용 Junction 온도</label><output id="tmaxo"></output><input type="range" id="tmax" min="85" max="115" step="1" value="105"></div>
+        </fieldset>
+        <p class="assume">가정값 (사내 실측으로 교체 권장): 기존 Cold Plate 0.012 °C/W, IMMC-1은 공개 데모 기준 기존 대비 열저항 약 18% 감소, Lid 확산 0.02 °C·cm²/W, TIM2 0.10 °C·cm²/W(Die 면적 3배 적용), Lid-less는 Warpage로 TIM 저항 30% 증가, IMMC-2 대류 0.045 + 접합층 0.006 °C·cm²/W, IMMC-3 대류 0.035 + 실리콘 전도 0.002 °C·cm²/W. 냉각수 비열 약 3,900 J/kg·K, 온도 상승은 절반 반영.</p>
+      </div>
+      <div>
+        <div class="cmp" id="cmp" aria-live="polite"></div>
+        <div class="legend2" id="leg"></div>
+        <div class="insight" id="cinsight"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tiers">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>IMMC 단계별 엔지니어링 과제</h2>
+      <p>단계가 올라갈수록 협업 상대가 서버 OEM에서 패키지 조립사, 웨이퍼 팹으로 바뀝니다. 각 단계에서 넘어야 할 기술 문제와 검증 방법, 먼저 확보할 데이터를 정리했습니다.</p>
+    </div>
+    <div class="tier">
+      <article>
+        <div class="lv">IMMC-1 · Discrete Cooler</div>
+        <h3>기존 Cold Plate를 대체</h3>
+        <div class="removed">제거되는 층: 없음 · 개선되는 구간: Cold Plate 대류·유로 저항</div>
+        <dl>
+          <div><dt>핵심 과제</dt><dd>매니폴드 유로의 압력 강하와 유량 균일성, Hot Spot 맞춤 채널 배치, 양산 가공 편차</dd></div>
+          <div><dt>검증 방법</dt><dd>다중 센서 TTV로 열저항과 온도 균일도 측정, Rack 매니폴드 조건 유량 분배 시험, 장기 부식·막힘 시험</dd></div>
+          <div><dt>인터페이스</dt><dd>표준 퀵커넥터 규격, 서버 OEM 기구 사양, CDU 공급 온도·압력 범위</dd></div>
+          <div><dt>먼저 확보할 데이터</dt><dd>동일 TTV에서 기준 Cold Plate 대비 열저항·압력 강하 곡선, 제3자 시험 결과</dd></div>
+        </dl>
+      </article>
+      <article>
+        <div class="lv">IMMC-2 · Package-integrated</div>
+        <h3>패키지 안으로 들어간 냉각</h3>
+        <div class="removed">제거되는 층: Lid, TIM2, 기존 TIM1 · 새 계면: Die ↔ 냉각 구조 접합</div>
+        <dl>
+          <div><dt>핵심 과제</dt><dd>접합층 보이드와 CTE 불일치, 기판 Warpage 흡수, 로직과 HBM 높이 차, 패키지 내 누수 방지와 밀봉</dd></div>
+          <div><dt>검증 방법</dt><dd>온도별 Warpage 실측과 접합부 응력 해석, 열사이클 후 접합층 열저항 재측정, He 누설 시험, 압력 사이클 시험</dd></div>
+          <div><dt>인터페이스</dt><dd>OSAT 조립 공정 온도, 기판 사양, HBM 스택 높이 규격(775 µm), 유체 입출구 위치</dd></div>
+          <div><dt>먼저 확보할 데이터</dt><dd>패키지 조립 공정 온도에서의 매니폴드 변형량, 접합층 소재별 신뢰성</dd></div>
+        </dl>
+      </article>
+      <article>
+        <div class="lv">IMMC-3 · Wafer-level</div>
+        <h3>실리콘 안에 새긴 유로</h3>
+        <div class="removed">제거되는 층: TIM 전부, Lid · 새 계면: 실리콘 유로 밀봉층</div>
+        <dl>
+          <div><dt>핵심 과제</dt><dd>유로 깊이와 실리콘 강도의 균형, 막힘과 냉각수 순도, 후면 전력 공급(BSPDN)과의 공간 경쟁, 웨이퍼 공정 호환성</dd></div>
+          <div><dt>검증 방법</dt><dd>식각 깊이별 기계 강도 시험, 장기 유동 후 막힘·부식 분석, 테스트 웨이퍼 기반 열 성능과 수율</dd></div>
+          <div><dt>인터페이스</dt><dd>팹 공정 규칙, 후면 전력 배선 설계, 칩 설계사의 Hot Spot 정보</dd></div>
+          <div><dt>먼저 확보할 데이터</dt><dd>식각 유로 테스트 칩의 열 성능과 기계 신뢰성, 팹 파트너 공정 적합성 평가</dd></div>
+        </dl>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="landscape">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>칩·패키지 통합 냉각의 기술 경쟁 구도</h2>
+      <p>칩 가까이로 냉각을 가져가는 흐름은 KoolMicro만의 방향이 아닙니다. 파운드리, 하이퍼스케일러, 전문 스타트업이 각자 다른 층에서 접근하고 있어 벤치마크와 차별화 기준을 명확히 해야 합니다.</p>
+    </div>
+    <div class="tbl-wrap" style="margin-top:0">
+      <table>
+        <thead><tr><th>주체</th><th>접근 방식</th><th>공개된 성과·계획</th><th>IMMC 대비 비교 포인트</th><th>근거</th></tr></thead>
+        <tbody>
+          <tr><td>TSMC (IMC-Si)</td><td>마이크로채널 실리콘 Lid를 칩 후면에 융착 접합, CoWoS 통합</td><td>TIM 없이 직접 실리콘 냉각 시연, 2027년 상용화 목표로 보도</td><td>IMMC-2·3과 가장 직접적으로 겹침. 파운드리 공정 내재화가 강점</td><td>2차·3차</td></tr>
+          <tr><td>Microsoft + Corintis</td><td>칩 후면에 식각한 잎맥 형태 유로, AI 기반 채널 최적화</td><td>Cold Plate 대비 최대 3배 열 제거, GPU 실리콘 최대 온도 상승 65% 감소</td><td>IMMC-3과 같은 칩 내장 방향. 사용자 기업이 직접 칩 설계에 반영</td><td>1차·2차</td></tr>
+          <tr><td>Corintis</td><td>유로 설계 소프트웨어와 미세 구조 구리 Cold Plate</td><td>시리즈 A 2,400만 달러(Intel Capital 참여), 2026년 말 연 100만 개 생산 목표</td><td>IMMC-1과 제품 층위가 겹치고 설계 도구로 차별화</td><td>2차</td></tr>
+          <tr><td>기존 Cold Plate 공급사</td><td>미세 채널 고도화, 대량 생산</td><td>AVC, Cooler Master, Jentech, Delta가 Rubin 공급사로 지명</td><td>IMMC-1의 직접 경쟁 대상. 가격·양산 속도가 강점</td><td>2차</td></tr>
+          <tr><td>KoolMicro (IMMC)</td><td>수직 매니폴드와 짧은 마이크로채널, 3단계 통합 로드맵</td><td>공개 자료 기준 단상 냉각 4.8 kW/GPU, 4 kW에서 Junction 83 °C, 가열 블록 기준 500 W/cm² 이상</td><td>세 층위를 모두 로드맵에 둔 점이 차별점. 독립 검증과 제조 파트너 확보가 과제</td><td>회사 발표·2차</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="coupling">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>패키지 기술 흐름이 IMMC에 주는 의미</h2>
+      <p><a href="packaging.html">패키징 심화</a>와 <a href="cooling.html">냉각 심화</a>에서 다룬 변화가 IMMC 개발에 어떤 조건과 기회를 만드는지 연결했습니다.</p>
+    </div>
+    <div class="couple">
+      <article>
+        <div class="pair"><span class="s">기판 Warpage</span> × <span class="m">IMMC-2</span></div>
+        <h3>Lid가 없어지면 Warpage를 누가 흡수하나</h3>
+        <p>Rubin은 기판 Warpage 때문에 분리형 Heat Spreader를 보류했습니다. IMMC-2는 Lid를 없애므로 매니폴드 구조와 접합층이 이 변형을 직접 받아야 합니다.</p>
+        <p class="act">개발 과제: 조립 온도 구간의 Warpage를 입력으로 한 매니폴드 강성·접합층 두께 설계</p>
+      </article>
+      <article>
+        <div class="pair"><span class="h">HBM 적층</span> × <span class="m">IMMC-2·3</span></div>
+        <h3>높이가 다른 두 칩을 한 번에 냉각</h3>
+        <p>HBM은 775 µm 높이 한도 안에서 16단으로 쌓이고 로직 Die와 높이·발열 밀도가 다릅니다. 매니폴드가 두 영역에 다른 유량과 접촉 높이를 줘야 합니다.</p>
+        <p class="act">개발 과제: 로직·HBM 구역별 유량 분배와 단차 대응 매니폴드 설계</p>
+      </article>
+      <article>
+        <div class="pair"><span class="m">온수 냉각</span> × <span class="s">IMMC 전 단계</span></div>
+        <h3>입구 온도가 높을수록 IMMC가 유리해진다</h3>
+        <p>냉각이 칩에 가까울수록 냉각수가 덜 차가워도 됩니다. Microsoft는 칩 내장 냉각으로 폐열 온도를 약 70 °C까지 높일 수 있다고 밝혔습니다.</p>
+        <p class="act">개발 과제: 입구 45 °C 이상 조건의 성능 데이터를 표준 시험 항목으로 확보</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="agenda">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>KoolMicro 개발 과제 제안</h2>
+      <p>공개 정보와 업계 흐름을 바탕으로 한 제안입니다. 팀 내 로드맵과 비교해 우선순위를 조정하세요.</p>
+    </div>
+    <div class="tbl-wrap" style="margin-top:0">
+      <table>
+        <thead><tr><th>시기</th><th>과제</th><th>목표 지표</th><th>필요한 역량·설비</th><th>외부 협업</th></tr></thead>
+        <tbody>
+          <tr><td>지금~2027</td><td>IMMC-1 독립 성능 검증과 양산 설계</td><td>기준 Cold Plate 대비 열저항·압력 강하, 가공 편차 범위</td><td>표준 TTV, 유량 분배 시험대, 부식·막힘 장기 시험</td><td>제3자 시험기관, 서버 OEM</td></tr>
+          <tr><td>지금~2027</td><td>온수·고전력 조건 성능 확보</td><td>입구 45 °C 이상에서의 허용 전력</td><td>고온 냉각수 루프, 3 kW 이상 가열 TTV</td><td>CDU 업체</td></tr>
+          <tr><td>2027~2028</td><td>IMMC-2 접합·밀봉 공정 개발</td><td>열사이클 후 접합층 열저항 변화, 누설률</td><td>Warpage 측정, 접합 소재 평가, 누설 시험</td><td>OSAT, 기판사, 소재사</td></tr>
+          <tr><td>2027~2028</td><td>로직·HBM 혼재 패키지 매니폴드</td><td>로직과 HBM 영역 온도 차</td><td>이종 발열 TTV, 구역별 유량 해석</td><td>메모리사, 가속기 설계사</td></tr>
+          <tr><td>2028 이후</td><td>IMMC-3 식각 유로 테스트 칩</td><td>식각 깊이별 강도와 열 성능, 막힘 발생률</td><td>MEMS 식각 파트너, 웨이퍼 레벨 신뢰성 평가</td><td>파운드리, 연구기관</td></tr>
+          <tr><td>상시</td><td>설계 도구와 Hot Spot 맞춤 최적화</td><td>설계 반복 기간, 예측과 실측 오차</td><td>유동·열 연성 해석 자동화</td><td>EDA·해석 도구 업체</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="sources">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>근거 원장</h2>
+      <p>KoolMicro 성능 수치는 회사 발표와 이를 인용한 보도 기준입니다. 경쟁 기술 정보는 공개 보도 기준이며 원문 확인이 필요합니다.</p>
+    </div>
+    <div class="tbl-wrap" style="margin-top:0">
+      <table>
+        <thead><tr><th>주제</th><th>등급</th><th>기준 시점</th><th>원문</th></tr></thead>
+        <tbody>
+          <tr><td>IMMC 구조, 3단계 로드맵, 성능 주장, 외부 평가</td><td>2차 (회사 자료 인용)</td><td>2026.05</td><td><a href="https://www.allaboutcircuits.com/news/the-cooling-problem-that-could-bottleneck-ai/" target="_blank" rel="noopener">All About Circuits</a></td></tr>
+          <tr><td>SC25 데모: GB200 대상 열저항 15~20% 감소</td><td>2차</td><td>2025.12</td><td><a href="https://armdevices.net/2025/12/06/koolmicro-liquid-cooling-sc25-for-ai-servers-gb200-cold-plates-and-package-level-immc/" target="_blank" rel="noopener">ARMdevices</a></td></tr>
+          <tr><td>Pre-A 투자 유치, 4 kW 이상 TDP 지원</td><td>1차 (보도자료)</td><td>2026.02</td><td><a href="https://www.koamspa.com/press-releases/breaking-the-thermal-limits-of-ai-chips-koolmicro-secures-pre-a-funding-from-silicon-valley-vcs-and-global-investors" target="_blank" rel="noopener">KASPA</a></td></tr>
+          <tr><td>TSMC IMC-Si 직접 실리콘 냉각</td><td>3차</td><td>2025.10</td><td><a href="https://semiwiki.com/semiconductor-manufacturers/362017-breaking-the-thermal-wall-tsmc-demonstrates-direct-to-silicon-liquid-cooling-on-cowos/" target="_blank" rel="noopener">SemiWiki</a></td></tr>
+          <tr><td>Microsoft 칩 내장 미세유체 냉각</td><td>1차</td><td>2025.09</td><td><a href="https://news.microsoft.com/source/features/innovation/microfluidics-liquid-cooling-ai-chips/" target="_blank" rel="noopener">Microsoft</a></td></tr>
+          <tr><td>Microsoft·Corintis 성과, 폐열 70 °C</td><td>2차</td><td>2026.06</td><td><a href="https://www.datacenterdynamics.com/en/news/microsoft-partners-with-corintis-for-bio-inspired-in-chip-microfluidic-cooling/" target="_blank" rel="noopener">DCD</a></td></tr>
+          <tr><td>Corintis 생산 계획</td><td>2차</td><td>2026</td><td><a href="https://spectrum.ieee.org/amp/microfluidics-cooling-ai-chips-corintis-2674278329" target="_blank" rel="noopener">IEEE Spectrum</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Package & Thermal Intelligence · KoolMicro 동료용 기술 인사이트 페이지입니다. 공개 자료 기반이며 계산기 수치는 설계 값이 아닙니다. 사내 비공개 데이터를 추가할 경우 공개 저장소에 올리지 마세요. <a href="index.html">홈</a> · <a href="packaging.html">패키징 심화</a> · <a href="cooling.html">냉각 심화</a></p>
+  </div>
+</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const C={fluid:"#6FB7BE",cool:"#0E7C86",tim2:"#E0A11B",lid:"#D98A2B",tim1:"#C2361C",bond:"#9A6FB0",si:"#5B4B8A"};
+const N={fluid:"냉각수 온도 상승",cool:"냉각 구조 대류·유로",tim2:"TIM2",lid:"Lid 확산",tim1:"TIM1",bond:"접합층",si:"실리콘 전도"};
+function run(){
+ const P=+$("p").value,A=+$("a").value,HS=+$("hs").value,Rt=+$("tim").value,Tin=+$("tin").value,Q=+$("q").value,Tmax=+$("tmax").value;
+ $("po").textContent=P+" W";$("ao").textContent=A+" cm²";$("hso").textContent=HS.toFixed(1)+"배";$("tino").textContent=Tin+" °C";$("qo").textContent=Q.toFixed(1)+" L/min";$("tmaxo").textContent=Tmax+" °C";
+ const q=P*HS/A, fl=P/((Q/60)*3900)/2, cp=P*0.012, t2=P*0.10/(A*3), ld=q*0.02;
+ const S=[
+  {n:"Cold Plate + Lid",s:"현재 주류",d:{fluid:fl,cool:cp,tim2:t2,lid:ld,tim1:q*Rt}},
+  {n:"Lid-less Cold Plate",s:"Warpage 부담",d:{fluid:fl,cool:cp,tim1:q*Rt*1.3}},
+  {n:"IMMC-1",s:"Discrete",km:1,d:{fluid:fl,cool:cp*0.82,tim2:t2,lid:ld,tim1:q*Rt}},
+  {n:"IMMC-2",s:"패키지 통합",km:1,d:{fluid:fl,cool:q*0.045,bond:q*0.006}},
+  {n:"IMMC-3",s:"칩 내장",km:1,d:{fluid:fl,cool:q*0.035,si:q*0.002}}
+ ];
+ S.forEach(x=>{x.sum=Object.values(x.d).reduce((a,b)=>a+b,0);x.tj=Tin+x.sum;});
+ const mx=Math.max(Tmax,...S.map(x=>x.tj));
+ $("cmp").innerHTML=S.map(x=>{
+  const cls=x.tj>Tmax?"bad":(Tmax-x.tj<10?"warn":"ok");
+  const segs=`<span style="width:${Tin/mx*100}%;background:transparent"></span>`+Object.keys(x.d).filter(k=>x.d[k]>0).map(k=>`<span style="width:${x.d[k]/mx*100}%;background:${C[k]}" title="${N[k]} +${x.d[k].toFixed(1)} °C"></span>`).join("");
+  return `<div class="row${x.km?" km":""}"><div class="nm">${x.n}<small>${x.s}</small></div><div class="tr">${segs}</div><div class="v ${cls}">${x.tj.toFixed(0)} °C</div></div>`;
+ }).join("");
+ $("leg").innerHTML=Object.keys(N).map(k=>`<span><i style="background:${C[k]}"></i>${N[k]}</span>`).join("")+`<span>막대 왼쪽 빈 구간 = 입구 온도</span>`;
+ // max power per structure at Tmax
+ const lim=S.map(x=>({n:x.n,p:Math.round(P*(Tmax-Tin)/x.sum/50)*50}));
+ const first=S.find(x=>x.tj<=Tmax);
+ const base=S[0], i2=S[3];
+ $("cinsight").innerHTML=`<b>허용 온도 ${Tmax} °C에서 구조별 추정 한계 전력</b>${lim.map(l=>`${l.n} 약 ${l.p.toLocaleString()} W`).join(" · ")}<br><br>현재 조건에서 Hot Spot 열유속은 ${q.toFixed(0)} W/cm²이며, IMMC-2는 기존 Cold Plate 구조보다 Junction 온도를 약 ${(base.tj-i2.tj).toFixed(0)} °C 낮춥니다. ${first?`허용 온도를 만족하는 가장 단순한 구조는 ${first.n}입니다.`:"다섯 구조 모두 허용 온도를 넘습니다. 유량이나 입구 온도 조건부터 다시 보세요."}`;
+}
+["p","a","hs","tim","tin","q","tmax"].forEach(id=>$(id).addEventListener("input",run));
+run();
+</script>
+</body>
+</html>

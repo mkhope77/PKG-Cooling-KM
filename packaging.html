@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>패키징 심화 · 기판 · TIM · HBM 열 설계 | Package & Thermal Intelligence</title>
+<meta name="description" content="AI 가속기 패키지의 기판, TIM, HBM 열 설계를 설계 변수, 개발 지표, 검증 방법, 미해결 과제로 정리한 패키지·냉각 개발 엔지니어용 심화 페이지">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F5; --paper:#FFFFFF; --ink:#1C252C; --ink-2:#4A5862; --line:#D5DCE0;
+  --cool:#0E7C86; --cool-soft:#DCEFF0; --warm:#E0A11B; --warm-soft:#FBF0D6; --warm-ink:#8A5E00; --hot:#C2361C; --hot-soft:#F7E1DC;
+  --sub:#5B4B8A; --sub-soft:#E8E4F3;
+  --serif:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+    --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --warm-soft:#3A2F14; --warm-ink:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+    --sub:#A594D9; --sub-soft:#2A2440;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+  --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --warm-soft:#3A2F14; --warm-ink:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+  --sub:#A594D9; --sub-soft:#2A2440;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;word-break:keep-all}
+a{color:var(--cool)}
+:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--serif);line-height:1.3;margin:0}
+h2{font-size:clamp(1.55rem,3vw,2.1rem);max-width:30ch}
+h3{font-size:1.15rem}
+p{margin:0 0 1em;max-width:68ch}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.brand{font-family:var(--serif);font-weight:900;font-size:1.05rem;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:14px;height:28px;border-radius:3px;background:linear-gradient(var(--cool),var(--warm),var(--hot));display:inline-block}
+.crumb{font-size:.9rem;color:var(--ink-2)}
+.crumb a{color:var(--ink-2)}
+.subnav{display:flex;gap:6px;overflow-x:auto;padding:8px 0 10px}
+.subnav a{flex:none;font-size:.88rem;padding:6px 14px;border-radius:99px;border:1px solid var(--line);color:var(--ink);text-decoration:none;background:var(--paper)}
+.subnav a:hover{border-color:var(--ink-2)}
+
+.hero{padding:48px 0 36px}
+.hero h1{font-size:clamp(1.9rem,4.2vw,3rem);font-weight:900;max-width:18ch}
+.hero .lead{color:var(--ink-2);font-size:1.05rem;margin-top:18px}
+.q3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:30px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+@media (max-width:860px){.q3{grid-template-columns:1fr}}
+.q3 a{padding:20px 22px;text-decoration:none;color:var(--ink);border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:block}
+.q3 a:hover{background:var(--bg)}
+.q3 .t{font-size:.84rem;font-weight:600}
+.q3 .t.s{color:var(--sub)} .q3 .t.m{color:var(--warm-ink)} .q3 .t.h{color:var(--hot)}
+.q3 p{font-family:var(--serif);font-size:1.08rem;font-weight:700;margin:6px 0 0;line-height:1.45}
+
+section{padding:60px 0;border-top:1px solid var(--line)}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:28px;align-items:end}
+@media (max-width:860px){.sec-head{grid-template-columns:1fr}}
+.sec-head p{color:var(--ink-2);margin:0}
+
+/* swimlane roadmap */
+.lane-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+.lanes{display:grid;grid-template-columns:8.5rem repeat(5,minmax(150px,1fr));min-width:920px}
+.lanes .yr{padding:12px 14px;font-weight:600;font-size:.9rem;border-bottom:1px solid var(--line);color:var(--ink-2)}
+.lanes .yr.now{color:var(--ink)}
+.lanes .lname{padding:16px 14px;font-family:var(--serif);font-weight:700;border-bottom:1px solid var(--line);border-right:1px solid var(--line);display:flex;align-items:flex-start}
+.lanes .cell{padding:10px 8px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.lanes .cell.last,.lanes .lname.last{border-bottom:0}
+.ev{font:inherit;font-size:.82rem;line-height:1.4;text-align:left;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;color:var(--ink)}
+.ev.fact{background:var(--cool-soft);border-color:var(--cool)}
+.ev.plan{background:var(--warm-soft);border-color:var(--warm)}
+.ev.hyp{background:transparent;border:1px dashed var(--ink-2)}
+.ev[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.82rem;color:var(--ink-2);margin:14px 0 0}
+.legend span::before{content:"";display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:6px;vertical-align:0}
+.legend .f::before{background:var(--cool-soft);border:1px solid var(--cool)}
+.legend .p::before{background:var(--warm-soft);border:1px solid var(--warm)}
+.legend .h::before{border:1px dashed var(--ink-2)}
+.evdetail{margin-top:16px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 20px;min-height:120px}
+.evdetail h4{font-size:1.05rem;margin-bottom:6px}
+.evdetail .src{font-size:.8rem;color:var(--ink-2);margin:8px 0 0}
+
+/* track */
+.track-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px}
+@media (max-width:920px){.track-grid{grid-template-columns:1fr}}
+.qbox{border-left:4px solid var(--sub);padding:4px 0 4px 18px;margin-bottom:26px}
+.qbox.m{border-color:var(--warm)} .qbox.h{border-color:var(--hot)}
+.qbox b{display:block;font-size:.84rem;color:var(--ink-2);font-weight:500;margin-bottom:4px}
+.qbox p{font-family:var(--serif);font-size:1.2rem;font-weight:700;margin:0;line-height:1.45}
+.facts{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.facts li{padding:13px 0;border-bottom:1px solid var(--line);font-size:.93rem}
+.facts .meta{display:block;font-size:.76rem;color:var(--ink-2);margin-top:3px}
+.tag{font-size:.7rem;border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-right:6px;color:var(--ink-2);font-weight:600}
+.side{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px}
+.side h3{margin-bottom:12px}
+.side dl{margin:0;display:grid;gap:14px}
+.side dt{font-size:.82rem;color:var(--ink-2)}
+.side dd{margin:2px 0 0;font-size:.93rem}
+.side .kill{border-top:1px solid var(--line);padding-top:14px;margin-top:4px}
+.side .kill dt{color:var(--hot)}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);margin-top:26px}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:.89rem}
+th,td{padding:12px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--ink-2);background:var(--bg);font-size:.8rem}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.badge{display:inline-block;font-size:.74rem;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.b-mass{background:var(--cool-soft);color:var(--cool)}
+.b-pilot{background:var(--warm-soft);color:var(--warm-ink)}
+.b-pre{background:var(--hot-soft);color:var(--hot)}
+
+/* coupling matrix */
+.couple{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.couple{grid-template-columns:1fr}}
+.couple article{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px}
+.pair{font-size:.84rem;font-weight:600;margin-bottom:8px}
+.pair .s{color:var(--sub)} .pair .m{color:var(--warm-ink)} .pair .h{color:var(--hot)}
+.couple h3{font-size:1.05rem;margin-bottom:10px}
+.couple p{font-size:.92rem;color:var(--ink-2)}
+.couple .act{font-size:.88rem;border-top:1px solid var(--line);padding-top:10px;margin:0;color:var(--ink)}
+
+/* one pager */
+.onepager{background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:28px}
+.op-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:18px}
+@media (max-width:900px){.op-grid{grid-template-columns:1fr}}
+.op-grid h4{font-size:.95rem;margin-bottom:6px}
+.op-grid p,.op-grid ul{font-size:.9rem;margin:0}
+.op-grid ul{padding-left:1.1em}
+.rec{font-family:var(--serif);font-size:1.3rem;font-weight:700;max-width:40ch;line-height:1.45;margin:0}
+
+
+/* value chain map */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.filters button{font:inherit;font-size:.86rem;padding:6px 14px;border-radius:99px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.vc-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+.vc{display:grid;grid-template-columns:9.5rem repeat(4,minmax(170px,1fr));min-width:900px}
+.vc .hd{padding:12px 14px;font-size:.84rem;font-weight:600;color:var(--ink-2);border-bottom:1px solid var(--line);background:var(--bg)}
+.vc .hd small{display:block;font-weight:400;font-size:.75rem}
+.vc .seg-name{padding:16px 14px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.vc .seg-name b{font-family:var(--serif);display:block}
+.vc .seg-name span{font-size:.78rem;color:var(--ink-2);display:block;margin-top:4px;line-height:1.45}
+.vc .slot{padding:10px 8px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.vc .row-last{border-bottom:0}
+.co{font:inherit;font-size:.83rem;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.co abbr{font-size:.68rem;font-weight:600;text-decoration:none;padding:0 4px;border-radius:3px;background:var(--paper);border:1px solid var(--line);color:var(--ink-2)}
+.co.kr{border-color:var(--cool)} .co.kr abbr{color:var(--cool);border-color:var(--cool)}
+.co.dim{opacity:.25}
+.co[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.co .q{font-size:.7rem;color:var(--ink-2)}
+.codetail{margin-top:16px;display:grid;grid-template-columns:1.2fr .8fr;gap:22px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+@media (max-width:860px){.codetail{grid-template-columns:1fr}}
+.codetail h4{font-size:1.1rem;margin-bottom:4px}
+.codetail .sub{font-size:.84rem;color:var(--ink-2);margin-bottom:10px}
+.codetail dl{margin:0;display:grid;grid-template-columns:5.5rem 1fr;gap:6px 12px;font-size:.9rem}
+.codetail dt{color:var(--ink-2)} .codetail dd{margin:0}
+.codetail .impl{border-left:3px solid var(--cool);padding-left:14px;font-size:.92rem}
+.codetail .impl b{display:block;font-size:.8rem;color:var(--cool);margin-bottom:4px}
+.conc{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:26px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+@media (max-width:900px){.conc{grid-template-columns:1fr}}
+.conc div{padding:18px 20px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.conc h4{font-size:1rem;margin-bottom:6px}
+.conc .lvl{font-size:.78rem;font-weight:600;margin-bottom:8px;display:inline-block;padding:2px 8px;border-radius:99px}
+.lvl.hi{background:var(--hot-soft);color:var(--hot)} .lvl.md{background:var(--warm-soft);color:var(--warm-ink)} .lvl.lo{background:var(--cool-soft);color:var(--cool)}
+.conc p{font-size:.88rem;color:var(--ink-2);margin:0}
+.note{font-size:.82rem;color:var(--ink-2);margin-top:12px}
+footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:.84rem;color:var(--ink-2)}
+footer p{max-width:none}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="nav">
+      <a class="brand" href="index.html"><i aria-hidden="true"></i>Package & Thermal Intelligence</a>
+      <span class="crumb"><a href="index.html">홈</a> / 패키징 심화</span>
+    </div>
+    <nav class="subnav" aria-label="페이지 내 이동">
+      <a href="#roadmap">통합 로드맵</a>
+      <a href="#substrate">기판</a>
+      <a href="#tim">TIM</a>
+      <a href="#hbm">HBM 열 설계</a>
+      <a href="#valuechain">밸류체인 맵</a>
+      <a href="#coupling">상호 영향</a>
+      <a href="#onepager">개발 방향 요약</a>
+      <a href="#sources">근거</a>
+      <a href="koolmicro.html">KoolMicro IMMC</a>
+      <a href="cooling.html">냉각 심화로 이동</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap hero">
+  <h1>패키지 안에서 결정되는 세 가지 병목</h1>
+  <p class="lead">기판은 평탄도와 공급을, TIM은 열저항을, HBM 적층은 높이와 층간 열 축적을 제한합니다. 세 요소는 서로의 설계 여유를 잡아먹기 때문에 하나만 최적화하면 다른 곳에서 문제가 터집니다. 각 영역에서 다음 세대 개발 전에 답해야 할 기술 질문부터 시작합니다.</p>
+  <div class="q3">
+    <a href="#substrate"><span class="t s">기판</span><p>패키지가 커질수록 늘어나는 Warpage를 어느 층에서 흡수할 것인가</p></a>
+    <a href="#tim"><span class="t m">TIM</span><p>Die 계면의 열저항을 한 자릿수 낮추면서 수천 번의 열사이클을 견딜 수 있는가</p></a>
+    <a href="#hbm"><span class="t h">HBM 열 설계</span><p>30 µm 박막 16단 적층에서 하단 Die의 열을 어떤 경로로 뺄 것인가</p></a>
+  </div>
+</div>
+
+<section id="roadmap">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>2026~2030 통합 기술 로드맵</h2>
+      <p>세 영역의 주요 이정표를 한 화면에 놓았습니다. 항목을 누르면 근거와 사업적 의미가 표시됩니다. 확인된 사실, 기업 계획, 업계 전망을 구분해 표시하며 전망은 반증될 수 있습니다.</p>
+    </div>
+    <div class="lane-wrap"><div class="lanes" id="lanes"></div></div>
+    <div class="legend"><span class="f">확인된 사실</span><span class="p">기업 계획·목표</span><span class="h">업계 전망·가설</span></div>
+    <div class="evdetail" id="evdetail" aria-live="polite"></div>
+  </div>
+</section>
+
+<section id="substrate">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>기판: 부족기의 물량과 전환기의 포지션</h2>
+      <p>AI 패키지가 커지고 층수가 늘면서 기판 한 장에 들어가는 공정 부하가 급증했습니다. 단기 과제는 ABF와 저CTE 유리섬유 확보, 중장기 과제는 Glass Core 전환 시점 판단입니다.</p>
+    </div>
+    <div class="track-grid">
+      <div>
+        <div class="qbox"><b>엔지니어링 질문</b><p>패키지 면적과 빌드업 층수가 계속 늘 때, Warpage 한계를 기판 소재, 코어 구조, 조립 공정 중 어디서 풀어야 TIM과 Cold Plate의 설계 여유를 지킬 수 있는가</p></div>
+        <ul class="facts">
+          <li>ABF 기판 공급 부족은 2026년 하반기 약 10%, 2027년 20% 수준으로 확대될 것으로 추정됩니다. 저CTE T-glass 섬유도 2026년 10% 이상 부족이 예상됩니다.<span class="meta"><span class="tag">MODELED</span>Counterpoint 추정 인용 · 3차 · 2026.08</span></li>
+          <li>Ibiden은 AI 서버 기판의 생산 부하가 2024년 대비 2026년 1.8배, 2028년 2.5배가 될 것으로 제시했습니다.<span class="meta"><span class="tag">FACT</span>Ibiden 실적 자료 인용 · 3차 경유 · 2026.08</span></li>
+          <li>Ibiden의 빌드업 구조 로드맵은 2026년 10-X-10, 2028년 12-X-12, 2030년부터 14-X-14입니다. 삼성전기는 ABF 증설에 12억 달러를 투입해 2027년 3분기 양산을 목표로 합니다.<span class="meta"><span class="tag">FACT</span>Tom's Hardware · 2차 · 2026.09</span></li>
+          <li>Absolics는 미국 조지아 공장에서 소량의 Glass 기판을 생산해 AMD MI400 등 고객용 시제품과 인증 샘플을 공급 중이며, 삼성전기는 세종 파일럿 라인에서 시제품을 생산하고 있습니다.<span class="meta"><span class="tag">FACT</span>Tom's Hardware · 2차 · 2026.09</span></li>
+          <li>Glass Core는 유기 코어를 대체할 뿐 ABF 빌드업층은 그대로 남습니다. TSMC 로드맵에서 Glass Core의 상용 규모는 2030년 이후로 전망됩니다.<span class="meta"><span class="tag">HYPOTHESIS</span>Tom's Hardware · 2차 · 2026.09</span></li>
+        </ul>
+      </div>
+      <aside class="side">
+        <h3>엔지니어링 판단</h3>
+        <dl>
+          <div><dt>핵심 설계 변수</dt><dd>코어 CTE와 강성, 빌드업 층수, 패키지 크기, 리플로우 온도 프로파일</dd></div>
+          <div><dt>개발 지표와 방향</dt><dd>상온·리플로우 온도 Warpage 크기와 형상(오목·볼록) 최소화, 층수 증가에도 수율 유지</dd></div>
+          <div><dt>검증 방법</dt><dd>Shadow Moiré 온도별 Warpage 측정, 유한요소 해석과 실측 상관, 열사이클 후 접합부 신뢰성</dd></div>
+          <div><dt>미해결 과제</dt><dd>Glass Core의 취성과 TGV 가공 결함, 대형 패널 공정의 장비 표준 부재</dd></div>
+          <div class="kill"><dt>방향 전환 신호</dt><dd>Glass Core 인증 샘플이 신뢰성 시험을 통과하거나 차세대 가속기가 Glass 기판을 공식 채택할 때</dd></div>
+        </dl>
+      </aside>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>기판 구조</th><th>강점</th><th>한계</th><th>성숙도</th><th>열 설계 영향</th><th>주요 플레이어</th></tr></thead>
+        <tbody>
+          <tr><td>유기 코어 + ABF 빌드업</td><td>양산 수율과 공급망 성숙</td><td>대형화 시 Warpage, 층수 증가로 수율 저하</td><td><span class="badge b-mass">양산 적용</span></td><td>Warpage가 TIM 두께 불균일을 만들어 열저항 상승</td><td>Ibiden, Unimicron, AT&S, 삼성전기, Shinko</td></tr>
+          <tr><td>고층 빌드업 (12-X-12 이상)</td><td>배선 밀도 확대, 대형 인터포저 수용</td><td>공정 부하와 원가 급증, 저CTE 소재 의존</td><td><span class="badge b-pilot">실증</span></td><td>층간 열팽창 차이 관리가 신뢰성 핵심</td><td>Ibiden, 삼성전기, Unimicron</td></tr>
+          <tr><td>Glass Core 기판</td><td>평탄도와 치수 안정성, 미세 배선</td><td>취성, TGV 가공 비용, 인증 이력 부족</td><td><span class="badge b-pilot">실증</span></td><td>평탄도 개선으로 TIM 접촉 균일성 향상 기대</td><td>Absolics, 삼성전기, Intel</td></tr>
+          <tr><td>Glass 인터포저 · Panel-level</td><td>대면적 효율, 웨이퍼 대비 면적 활용</td><td>장비·공정 표준 미정, 수율 미검증</td><td><span class="badge b-pre">PoC 전</span></td><td>대면적 균일 냉각 설계 필요</td><td>TSMC(CoPoS), 디스플레이 공정 기반 업체</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="tim">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>TIM: 패키지 열저항의 가장 큰 구간</h2>
+      <p>칩 전력이 수백 W를 넘어서며 폴리머 TIM으로는 온도 여유를 확보하기 어려워졌습니다. 금속 TIM과 액체금속으로의 전환은 소재 단가뿐 아니라 조립 공정과 신뢰성 평가 체계를 함께 바꿉니다.</p>
+    </div>
+    <div class="track-grid">
+      <div>
+        <div class="qbox m"><b>엔지니어링 질문</b><p>칩 전력이 2 kW 안팎으로 오를 때 TIM1 계면의 온도 강하를 몇 °C 이내로 묶어야 하며, 그 목표를 금속 TIM의 공정성·신뢰성 문제 없이 달성할 수 있는가</p></div>
+        <ul class="facts">
+          <li>열전도도 3~6 W/m·K 수준의 폴리머 TIM은 600 W급 AI GPU Die에 부족하며, 액체금속·솔더·초고열전도 소재가 다음 세대 대안으로 제시됩니다.<span class="meta"><span class="tag">FACT</span>PatSnap 분석 · 3차 · 2026</span></li>
+          <li>인듐 기반 솔더 TIM은 약 86 W/m·K로 금속 결합을 형성하며, Indium Corporation은 ECTC 2026에서 무플럭스 진공 포름산 리플로우 공정 연구를 발표했습니다.<span class="meta"><span class="tag">FACT</span>AtlasPCB 보도 · 3차 · 2026.06</span></li>
+          <li>Lid가 없는 직접 Cold Plate 구조에서는 단단한 방열판 없이 TIM이 Die 수준의 Warpage를 흡수해야 해 설계 난도가 크게 높아집니다.<span class="meta"><span class="tag">FACT</span>IEEE EPS Newsletter · 2차·학술 · 2026.03</span></li>
+          <li>액체금속 TIM의 열저항은 약 0.01~0.025 °C·cm²/W로 폴리머 대비 수 배 낮지만, 전기 전도성과 부식 관리가 과제입니다.<span class="meta"><span class="tag">FACT</span>PatSnap 분석 · 3차 · 2026</span></li>
+          <li>NVIDIA가 Rubin Ultra 세대부터 금속 TIM을 공식 채택할 것이라는 업계 관측이 있으나 공식 확인되지 않았습니다.<span class="meta"><span class="tag">HYPOTHESIS</span>SNS 업계 관측 · 3차 · 2025.09</span></li>
+        </ul>
+      </div>
+      <aside class="side">
+        <h3>엔지니어링 판단</h3>
+        <dl>
+          <div><dt>핵심 설계 변수</dt><dd>TIM 두께(BLT)와 균일도, 벌크 열전도도, 계면 접촉 저항, 조립 압력, 보이드율</dd></div>
+          <div><dt>개발 지표와 방향</dt><dd>TIM1 계면 저항을 금속 계열 수준(약 0.01 °C·cm²/W 이하)으로, 열사이클 후 열저항 증가를 최소화</dd></div>
+          <div><dt>검증 방법</dt><dd>Transient 열저항 측정(T3Ster 계열), 열사이클·고온 방치 후 재측정, X-ray·초음파로 보이드 검사</dd></div>
+          <div><dt>미해결 과제</dt><dd>Lid-less 구조에서 Die Warpage 흡수, 액체금속의 이동과 부식, 인듐 리플로우의 무플럭스 공정</dd></div>
+          <div class="kill"><dt>방향 전환 신호</dt><dd>주요 가속기의 Lid 유무 변화, 로직과 HBM 높이 차 확대로 이종 TIM이 필요해질 때</dd></div>
+        </dl>
+      </aside>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>TIM 계열</th><th>열전도도 (W/m·K)</th><th>강점</th><th>리스크</th><th>적용 위치</th><th>성숙도</th></tr></thead>
+        <tbody>
+          <tr><td>폴리머 그리스 · 패드</td><td>약 3~8</td><td>저비용, 재작업 용이</td><td>Pump-out, 고전력 대응 한계</td><td>TIM2, 서비스형 교체 부위</td><td><span class="badge b-mass">양산 적용</span></td></tr>
+          <tr><td>상변화 소재 (PCM)</td><td>약 3~6</td><td>도포 편의, 두께 제어</td><td>고전력 Die에는 부족</td><td>TIM2, Cold Plate 접촉면</td><td><span class="badge b-mass">양산 적용</span></td></tr>
+          <tr><td>인듐 · 인듐 합금 솔더</td><td>약 80~86</td><td>금속 결합, 낮은 압력에서 밀착</td><td>리플로우 공정, 원료 가격, 보이드</td><td>TIM1 (Die ↔ Lid)</td><td><span class="badge b-pilot">실증</span></td></tr>
+          <tr><td>액체금속 (Ga 계열)</td><td>약 25~85</td><td>미세 틈 완전 충진, 초저 열저항</td><td>전기 전도성, 부식, 이동</td><td>TIM1, Lid-less 직접 냉각</td><td><span class="badge b-pilot">실증</span></td></tr>
+          <tr><td>이종 복합 TIM</td><td>구간별 상이</td><td>로직과 HBM 높이 차 대응</td><td>설계·공정 복잡성</td><td>로직·HBM 혼재 패키지</td><td><span class="badge b-pre">PoC 전</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="hbm">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>HBM 열 설계: 높이 규격이 기술 선택을 바꾼다</h2>
+      <p>JEDEC가 HBM4 높이 한도를 완화하면서 하이브리드 본딩의 도입 압력이 한 세대 이상 늦춰졌습니다. 그 사이 16단 적층의 열 축적은 기존 본딩 방식과 소재 혁신으로 풀어야 합니다.</p>
+    </div>
+    <div class="track-grid">
+      <div>
+        <div class="qbox h"><b>엔지니어링 질문</b><p>하이브리드 본딩이 HBM5로 늦춰진 기간 동안, 마이크로범프와 몰드 언더필 구조 안에서 층간 열저항과 Hot Spot을 얼마나 더 낮출 수 있는가</p></div>
+        <ul class="facts">
+          <li>JEDEC는 HBM4 패키지 높이 한도를 720 µm에서 775 µm로 올렸고, 이로써 16단 HBM4도 마이크로범프로 조립할 수 있게 되었습니다.<span class="meta"><span class="tag">FACT</span>Tom's Hardware · SemiEngineering · 2차 · 2026</span></li>
+          <li>16단을 775 µm 안에 넣기 위해 SK hynix는 개별 DRAM 웨이퍼를 약 30 µm까지 얇게 가공했습니다. 얇은 Die는 열 확산 경로가 좁아져 Hot Spot 관리가 어려워집니다.<span class="meta"><span class="tag">FACT</span>TrendForce · EE Times 인용 · 2차 · 2026.01</span></li>
+          <li>SK hynix는 Hot Chips 2026에서 HBM4 12단 양산과 16단 고객 인증 진행을 밝혔고, HBM4E까지 MR-MUF를 유지하고 하이브리드 본딩은 HBM5부터 적용할 계획을 제시했습니다.<span class="meta"><span class="tag">FACT</span>Tom's Hardware · igor'sLAB · 2차 · 2026.08</span></li>
+          <li>SK hynix는 장치 전체가 아닌 열이 몰리는 Hot Spot에 고열전도 소재를 넣는 iHBM 기술을 개발 중입니다.<span class="meta"><span class="tag">FACT</span>BigGo 보도 · 3차 · 2026.08</span></li>
+          <li>Samsung은 HBM4 하이브리드 본딩을 추진해 왔고, JEDEC가 HBM4E부터 약 900 µm로 추가 완화를 검토한다는 보도가 있습니다. 실현 시 하이브리드 본딩 도입은 더 늦어질 수 있습니다.<span class="meta"><span class="tag">HYPOTHESIS</span>TrendForce 인용 · 3차 · 2026.04</span></li>
+        </ul>
+      </div>
+      <aside class="side">
+        <h3>엔지니어링 판단</h3>
+        <dl>
+          <div><dt>핵심 설계 변수</dt><dd>적층 수, Die 두께, 몰드·언더필 열전도도, Base-Die 발열 분포, 범프 피치</dd></div>
+          <div><dt>개발 지표와 방향</dt><dd>하단 Die와 Base-Die 온도를 로직 Die 대비 규격 이내로, Hot Spot 부위 선택적 열전도 개선</dd></div>
+          <div><dt>검증 방법</dt><dd>적층 내부 온도 분포 해석과 테스트 칩 실측, 박막 Die Warpage 측정, 열사이클 후 범프 균열 검사</dd></div>
+          <div><dt>미해결 과제</dt><dd>30 µm 박막의 취급과 Warpage, 필름·몰드 두께가 곧 열저항이 되는 구조, Custom Base-Die 발열 증가</dd></div>
+          <div class="kill"><dt>방향 전환 신호</dt><dd>JEDEC가 HBM4E 높이 한도를 추가 완화하거나 20단 이상에서 하이브리드 본딩 양산이 확정될 때</dd></div>
+        </dl>
+      </aside>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>적층 방식</th><th>열 특성</th><th>강점</th><th>한계</th><th>채택 현황</th><th>성숙도</th></tr></thead>
+        <tbody>
+          <tr><td>MR-MUF</td><td>몰드 언더필이 열 확산 경로 역할</td><td>생산성, 박형 적층 대응</td><td>고적층 시 Warpage 제어</td><td>SK hynix 주력, HBM4E까지 유지 계획</td><td><span class="badge b-mass">양산 적용</span></td></tr>
+          <tr><td>TC-NCF</td><td>비전도성 필름 두께가 열저항 변수</td><td>생산성, 낮은 열저항</td><td>칩 Warpage에 민감</td><td>Samsung, Micron 기존 세대</td><td><span class="badge b-mass">양산 적용</span></td></tr>
+          <tr><td>하이브리드 본딩 (Cu-Cu)</td><td>범프 제거로 층간 열저항 감소</td><td>10 µm 미만 피치, 높이 절감</td><td>장비 원가, 수율, 표면 청정도</td><td>HBM5 또는 20단 이상에서 본격화 전망</td><td><span class="badge b-pre">PoC 전</span></td></tr>
+          <tr><td>Hot Spot 선택적 고열전도 소재</td><td>열이 몰리는 부위만 개선</td><td>기존 공정과 호환</td><td>설계·배치 최적화 필요</td><td>SK hynix iHBM 개발 중</td><td><span class="badge b-pilot">실증</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="valuechain">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>국내외 기업 밸류체인 맵 · 협력과 벤치마크 대상</h2>
+      <p>네 개 공정 영역의 주요 기업을 현재 포지션별로 배치했습니다. 기업을 누르면 역할, 최근 신호, 근거 등급, 엔지니어 관점 포인트이 표시됩니다. 국가 필터로 국내 기업의 위치만 따로 볼 수 있습니다.</p>
+    </div>
+    <div class="filters" role="group" aria-label="국가 필터" id="cfilter"></div>
+    <div class="vc-wrap"><div class="vc" id="vc"></div></div>
+    <p class="note">기술 동향을 확인하거나 공동 개발·벤치마크 대상을 찾을 때 참고하세요. 포지션 기준 · 선도: 해당 영역 양산 주력 공급 · 확대: 양산 공급 중이며 점유 확대 · 진입: 신규 인증 또는 시제품 공급 · 초기 기술: 차세대 기술로 존재감. 파란 테두리는 국내 기업입니다. 점유율과 계약 정보는 보도 기준이며 기업 공식 확인이 필요합니다.</p>
+    <div class="codetail" id="codetail" aria-live="polite"></div>
+
+    <div class="conc">
+      <div><span class="lvl md">집중도 높음 · 증설 중</span><h4>기판</h4><p>상위 5개사가 고급 ABF 캐파 대부분을 보유하고, ABF 필름과 저CTE 유리섬유는 소수 일본 기업에 의존합니다. 국내는 삼성전기가 증설과 Glass 양쪽에서 확대를 노립니다.</p></div>
+      <div><span class="lvl lo">전환 초기 · 진입 창 열림</span><h4>TIM</h4><p>폴리머에서 금속 계열로 넘어가는 중이라 표준 공급사가 아직 굳지 않았습니다. 소재와 공정 적합성 데이터를 가진 기업이 먼저 인증 BOM에 진입합니다.</p></div>
+      <div><span class="lvl md">독점에서 다자 경쟁으로</span><h4>본딩 장비</h4><p>HBM용 TC 본더는 단일 공급 체제에서 3사 경쟁으로 바뀌었습니다. 하이브리드 본더는 해외 선도 기업이 앞서고 국내 기업이 2세대 장비로 추격하는 구도입니다.</p></div>
+      <div><span class="lvl hi">단일 공급원 리스크</span><h4>몰딩 · 언더필</h4><p>MR-MUF용 몰딩 소재와 NCF는 일본 기업 비중이 절대적입니다. 공급망 다변화 요구가 국내 소재 기업의 가장 직접적인 기회입니다.</p></div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>영역</th><th>국내 기업 현재 위치</th><th>협력 기회</th><th>필요한 기술 조합</th><th>핵심 리스크</th></tr></thead>
+        <tbody>
+          <tr><td>기판</td><td>삼성전기 증설·Glass 파일럿, Absolics 미국 소량 생산, LG이노텍 FC-BGA 확대</td><td>ABF 부족기 물량 확보, Glass Core 첫 인증 선점</td><td>기판 Warpage 데이터 + TIM 두께 설계 공동 제안</td><td>증설 가동 지연, Glass 상용화 시점 후퇴</td></tr>
+          <tr><td>TIM</td><td>글로벌 선도 기업 대비 존재감 제한적</td><td>금속·복합 TIM 전환기에 국내 OSAT·메모리사와 공동 인증</td><td>인듐·액체금속 소재 + 무플럭스 공정 + 신뢰성 평가</td><td>원료 조달, 장기 신뢰성 이력 부족</td></tr>
+          <tr><td>본딩 장비</td><td>한미반도체 TC 선도, 한화세미텍 진입, SEMES 삼성 계열</td><td>HBM4·4E TC 증설 수요, 하이브리드 본더 2세대 인증</td><td>TC 본더 + 무플럭스 공정 + 하이브리드 본더 로드맵</td><td>특허 분쟁, 해외 기업과의 점유 경쟁</td></tr>
+          <tr><td>몰딩 · 언더필</td><td>삼성SDI 자체 MUF 소재 개발</td><td>단일 공급원 대체, 고열전도 몰딩 공동 개발</td><td>고열전도 필러 + Hot Spot 선택 배치 + 박막 적층 신뢰성</td><td>수십 년 누적 데이터 격차, 인증 기간</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="coupling">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>세 영역의 상호 영향</h2>
+      <p>한 영역의 결정이 다른 영역의 설계 여유를 바꿉니다. 이 연결 고리가 단일 부품 공급사가 아닌 공동설계 파트너가 가치를 만들 수 있는 지점입니다.</p>
+    </div>
+    <div class="couple">
+      <article>
+        <div class="pair"><span class="s">기판</span> × <span class="m">TIM</span></div>
+        <h3>기판 Warpage가 TIM 두께를 흔든다</h3>
+        <p>대형 유기 기판이 휘면 TIM 두께가 위치마다 달라져 열저항이 불균일해집니다. Lid가 없는 구조에서는 이 영향이 더 직접적입니다. Glass Core의 평탄도는 TIM 설계 여유를 넓힐 수 있습니다.</p>
+        <p class="act">조합 제안: 기판 Warpage 데이터와 TIM 두께 설계를 한 패키지로 묶은 사양 제안</p>
+      </article>
+      <article>
+        <div class="pair"><span class="h">HBM</span> × <span class="m">TIM</span></div>
+        <h3>로직과 HBM의 높이 차가 접촉을 방해한다</h3>
+        <p>로직 Die와 HBM 스택의 높이와 발열이 달라 하나의 TIM으로 전체 면을 덮기 어렵습니다. 구간별로 다른 소재나 두께를 쓰는 이종 TIM이 대안으로 특허화되고 있습니다.</p>
+        <p class="act">조합 제안: HBM 높이 규격 변화에 맞춘 구간별 TIM과 Lid 단차 설계</p>
+      </article>
+      <article>
+        <div class="pair"><span class="h">HBM</span> × <span class="s">기판</span></div>
+        <h3>HBM 수가 늘수록 기판이 커진다</h3>
+        <p>한 패키지에 올리는 HBM 수가 늘면 인터포저와 기판 면적, 층수가 함께 증가합니다. 이는 ABF 부족을 심화하고 Glass 전환 필요성을 앞당기는 요인입니다.</p>
+        <p class="act">조합 제안: HBM 세대별 패키지 면적 시나리오로 기판 캐파 수요 추정</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="onepager">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>개발 방향 요약</h2>
+      <p>팀 내 기술 리뷰나 개발 계획서에 옮길 수 있도록 방향, 지표, 필요한 역량, 방향 전환 신호를 한 장으로 정리했습니다.</p>
+    </div>
+    <div class="onepager">
+      <p class="rec">개발 방향: 하이브리드 본딩 전환 전까지 2~3년은 기존 적층 구조 안에서 열저항을 줄이는 소재·계면 기술의 시간입니다. 기판 Warpage, TIM 계면, HBM 층간 열을 하나의 열·기계 모델로 묶어 검증하는 역량이 차세대 패키지 개발의 기반이 됩니다.</p>
+      <div class="op-grid"><div><h4>지금 집중할 과제</h4><ul><li>금속·복합 TIM 공정 적합성과 신뢰성</li><li>HBM 고열전도 몰드와 Hot Spot 선택 배치</li><li>대형 기판 Warpage 예측 모델</li></ul></div><div><h4>핵심 지표</h4><ul><li>TIM1 계면 저항과 열사이클 후 변화</li><li>적층 하단 Die 온도</li><li>온도별 Warpage 크기와 형상</li></ul></div><div><h4>필요한 측정·모델</h4><ul><li>Transient 열저항 측정 체계</li><li>Warpage 실측과 해석의 상관 데이터</li><li>패키지 단위 열·기계 연성 해석</li></ul></div><div><h4>방향 전환 신호</h4><ul><li>JEDEC 차기 높이 규격</li><li>Lid-less 구조 확산</li><li>Glass Core 첫 상용 채택</li></ul></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="sources">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>근거 원장</h2>
+      <p>2차·3차 자료는 공시, 표준, 학회 원문으로 교차 확인 후 사실로 승격합니다. 기업 계획은 발표 기준이며 변경될 수 있습니다.</p>
+    </div>
+    <div class="tbl-wrap" style="margin-top:0">
+      <table>
+        <thead><tr><th>주제</th><th>등급</th><th>기준 시점</th><th>원문</th></tr></thead>
+        <tbody>
+          <tr><td>ABF 기판 현황, Ibiden 로드맵, Glass Core 전망</td><td>2차</td><td>2026.09</td><td><a href="https://www.tomshardware.com/tech-industry/semiconductors/the-state-of-abf-substrates-in-data-center-silicon-in-2026-solving-the-supply-crunch-and-material-wall-beneath-every-ai-accelerator" target="_blank" rel="noopener">Tom's Hardware</a></td></tr>
+          <tr><td>ABF·T-glass 부족률, Ibiden 생산 부하</td><td>3차</td><td>2026.08</td><td><a href="https://www.bestpcbs.com/blog/2026/08/abf-substrate-shortage/" target="_blank" rel="noopener">BestPCBs</a></td></tr>
+          <tr><td>TIM 전략, Lid-less 구조 과제</td><td>2차·학술</td><td>2026.03</td><td><a href="https://eps.ieee.org/wp-content/uploads/2026/03/M-and-P-TC-Thermal-Interface-Materials-TIM-Strategy-for-Thermal-Management-in-AI-and-HPC-Applications-2026-IEEE-EPS-Newsletter_Final_YL2.pdf" target="_blank" rel="noopener">IEEE EPS</a></td></tr>
+          <tr><td>폴리머·액체금속 TIM 성능</td><td>3차</td><td>2026</td><td><a href="https://www.patsnap.com/resources/blog/articles/thermal-interface-material-strategies-for-ai-servers/" target="_blank" rel="noopener">PatSnap</a></td></tr>
+          <tr><td>인듐 솔더 TIM, ECTC 2026 발표</td><td>3차</td><td>2026.06</td><td><a href="https://www.atlaspcb.com/blog/stims-ai-chip-thermal-interface-materials-ectc-2026/" target="_blank" rel="noopener">AtlasPCB</a></td></tr>
+          <tr><td>HBM 높이 규격, 하이브리드 본딩 지연</td><td>2차</td><td>2026.09</td><td><a href="https://www.tomshardware.com/tech-industry/semiconductors/hybrid-bonding-roadmap-examined" target="_blank" rel="noopener">Tom's Hardware</a></td></tr>
+          <tr><td>HBM4 마이크로범프 유지</td><td>2차</td><td>2026.01</td><td><a href="https://semiengineering.com/hbm4-sticks-with-microbumps-postponing-hybrid-bonding/" target="_blank" rel="noopener">SemiEngineering</a></td></tr>
+          <tr><td>SK hynix 16단 MR-MUF, 30 µm 박막</td><td>2차</td><td>2026.01</td><td><a href="https://www.trendforce.com/news/2026/01/13/news-sk-hynix-may-stick-with-mr-muf-for-hbm4-16-high-despite-asmpt-tc-bonder-orders/" target="_blank" rel="noopener">TrendForce</a></td></tr>
+          <tr><td>SK hynix Hot Chips 2026 로드맵, iHBM</td><td>3차</td><td>2026.08</td><td><a href="https://finance.biggo.com/news/757029bb-1b70-41cd-bf5f-96d6514871ee" target="_blank" rel="noopener">BigGo</a></td></tr>
+          <tr><td>SK hynix HBM4 TC 본더 공급망, ASMPT 수주</td><td>2차</td><td>2025.12</td><td><a href="https://www.thelec.net/news/articleView.html?idxno=5517" target="_blank" rel="noopener">TheElec</a></td></tr>
+          <tr><td>한미반도체 TC Bonder 4.5 Griffin 수주</td><td>2차</td><td>2026.06</td><td><a href="https://www.thelec.net/news/articleView.html?idxno=11132" target="_blank" rel="noopener">TheElec</a></td></tr>
+          <tr><td>본딩 3트랙 구도, Namics·Resonac 소재 구도</td><td>3차</td><td>2026.05</td><td><a href="https://semihub.io/en/blog/hbm-guide-4.html" target="_blank" rel="noopener">SemiHub</a></td></tr>
+          <tr><td>SK hynix MR-MUF와 Namics 협력</td><td>2차</td><td>2024</td><td><a href="https://www.thelec.net/news/articleView.html?idxno=4746" target="_blank" rel="noopener">TheElec</a></td></tr>
+          <tr><td>Samsung MUF 소재 협의 (Nagase)</td><td>2차</td><td>2024.03</td><td><a href="https://www.trendforce.com/news/2024/03/14/news-salvaging-hbm-yield-samsung-follows-competitors-by-adopting-sk-hynixs-techniques/" target="_blank" rel="noopener">TrendForce</a></td></tr>
+          <tr><td>ABF 기판 주요 5개사 캐파 비중</td><td>3차</td><td>2026.06</td><td><a href="https://www.atlaspcb.com/news/news-samsung-abf-substrate-capacity-expansion-2026/" target="_blank" rel="noopener">AtlasPCB</a></td></tr>
+          <tr><td>JEDEC 900 µm 검토 보도</td><td>3차</td><td>2026.04</td><td><a href="https://photoncap.net/p/7-bonding-equipment-companies-behind" target="_blank" rel="noopener">PhotonCap</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Package & Thermal Intelligence · 공개 정보 기반 전략 프레임워크입니다. 투자 권유나 특정 기업 평가가 아니며, 수치와 기업 계획은 연결된 원문에서 재확인해야 합니다. <a href="index.html">홈으로 돌아가기</a></p>
+  </div>
+</footer>
+
+<script>
+const YEARS=["2026","2027","2028","2029","2030"];
+const LANES=[
+ {name:"기판", events:[
+  {y:"2026",k:"fact",t:"ABF 부족 약 10% 진입",d:"하반기 공급 부족이 약 10%로 추정되며 T-glass 섬유 부족이 병행됩니다. 가격 인상과 고객별 물량 배분이 가시화되는 시점입니다.",s:"Counterpoint 추정 인용 · 3차"},
+  {y:"2026",k:"plan",t:"Ibiden 10-X-10 빌드업",d:"고층 빌드업 구조가 AI 서버 기판 표준으로 올라갑니다. 층수 증가는 공정 부하와 원가를 함께 올립니다.",s:"Tom's Hardware · 2차"},
+  {y:"2027",k:"plan",t:"삼성전기 ABF 증설 양산",d:"12억 달러 증설분이 3분기 양산을 목표로 합니다. 증설 가동 속도가 부족률 완화의 주요 변수입니다.",s:"Tom's Hardware · 2차"},
+  {y:"2027",k:"hyp",t:"ABF 부족 약 20% 전망",d:"수요 증가가 증설 속도를 앞질러 부족률이 커질 수 있다는 전망입니다. 신규 캐파 조기 가동 시 반증됩니다.",s:"Counterpoint 추정 인용 · 3차"},
+  {y:"2028",k:"plan",t:"Ibiden 12-X-12",d:"빌드업 층수가 한 단계 더 늘어납니다. 생산 부하는 2024년 대비 2.5배로 제시되었습니다.",s:"Ibiden 자료 인용 · 3차 경유"},
+  {y:"2030",k:"hyp",t:"Glass Core 상용 규모",d:"TSMC와 Ibiden 로드맵 모두 Glass Core를 2030년 전후 Warpage 해법으로 봅니다. 그 전까지는 소량 인증 단계입니다.",s:"Tom's Hardware · 2차"}
+ ]},
+ {name:"TIM", events:[
+  {y:"2026",k:"fact",t:"폴리머 TIM 한계 표면화",d:"600 W급 Die에서 폴리머 TIM으로는 온도 여유 확보가 어렵다는 분석이 확산되고 금속 계열로 관심이 이동합니다.",s:"PatSnap · 3차"},
+  {y:"2026",k:"fact",t:"무플럭스 인듐 리플로우 발표",d:"ECTC 2026에서 인듐 솔더 TIM의 무플럭스 공정 연구가 발표되었습니다. 양산 공정 적합성이 금속 TIM 확산의 관건입니다.",s:"AtlasPCB · 3차"},
+  {y:"2027",k:"hyp",t:"차세대 GPU 금속 TIM 채택 관측",d:"NVIDIA 차세대 제품의 금속 TIM 채택 관측이 있으나 공식 확인 전입니다. 확인 시 소재 단가와 장비 수요가 함께 오릅니다.",s:"업계 관측 · 3차"},
+  {y:"2028",k:"hyp",t:"이종 TIM · 직접 접합 확산",d:"로직과 HBM 구간에 다른 TIM을 쓰거나 Die와 Cold Plate를 직접 접합하는 방식이 특허와 연구로 준비되고 있습니다.",s:"PatSnap 특허 분석 · 3차"}
+ ]},
+ {name:"HBM", events:[
+  {y:"2026",k:"fact",t:"HBM4 12단 양산 · 16단 인증",d:"SK hynix가 12단 양산과 16단 고객 인증 진행을 밝혔습니다. JEDEC 775 µm 한도 안에서 MR-MUF를 유지합니다.",s:"Hot Chips 2026 보도 · 2차·3차"},
+  {y:"2026",k:"fact",t:"30 µm 박막 DRAM",d:"16단을 높이 한도에 맞추기 위해 DRAM 웨이퍼를 약 30 µm까지 가공합니다. 열 확산이 어려워져 소재 혁신 수요가 생깁니다.",s:"TrendForce · 2차"},
+  {y:"2027",k:"plan",t:"HBM4E MR-MUF 유지",d:"SK hynix는 HBM4E까지 기존 공정을 유지할 계획입니다. 이 기간 고열전도 몰딩과 Hot Spot 소재가 핵심 차별화 수단입니다.",s:"igor'sLAB · 2차"},
+  {y:"2028",k:"hyp",t:"높이 한도 추가 완화 검토",d:"HBM4E부터 약 900 µm로 완화 검토 보도가 있습니다. 실현 시 하이브리드 본딩이 한 세대 더 늦어질 수 있습니다.",s:"TrendForce 인용 · 3차"},
+  {y:"2029",k:"hyp",t:"HBM5 하이브리드 본딩",d:"SK hynix는 HBM5 또는 20단 이상에서 하이브리드 본딩을 핵심 기술로 제시했습니다. 장비·공정 투자 시점의 기준입니다.",s:"Tom's Hardware · 2차"}
+ ]}
+];
+const lanes=document.getElementById("lanes"), det=document.getElementById("evdetail");
+let html='<div class="yr"></div>'+YEARS.map(y=>`<div class="yr${y==="2026"?" now":""}">${y}${y==="2026"?" (현재)":""}</div>`).join("");
+LANES.forEach((L,li)=>{
+  const last=li===LANES.length-1?" last":"";
+  html+=`<div class="lname${last}">${L.name}</div>`;
+  YEARS.forEach(y=>{
+    html+=`<div class="cell${last}">`+L.events.map((e,ei)=>e.y===y?`<button type="button" class="ev ${e.k}" data-l="${li}" data-e="${ei}" aria-pressed="false">${e.t}</button>`:"").join("")+`</div>`;
+  });
+});
+lanes.innerHTML=html;
+const KIND={fact:"확인된 사실",plan:"기업 계획·목표",hyp:"업계 전망·가설"};
+function pick(li,ei){
+  const e=LANES[li].events[ei];
+  lanes.querySelectorAll(".ev").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.l==li&&b.dataset.e==ei)?"true":"false"));
+  det.innerHTML=`<h4>${LANES[li].name} · ${e.y} · ${e.t}</h4><p style="margin:0">${e.d}</p><p class="src">${KIND[e.k]} · ${e.s}</p>`;
+}
+lanes.addEventListener("click",ev=>{const b=ev.target.closest(".ev");if(b)pick(+b.dataset.l,+b.dataset.e);});
+pick(2,0);
+
+/* value chain map */
+const POS=[["lead","선도","양산 주력 공급"],["grow","확대","점유 확대 중"],["enter","진입","인증·시제품"],["early","초기 기술","차세대 존재감"]];
+const SEGS=[
+ {id:"sub",name:"기판",desc:"ABF 기판 · Glass Core · 기판 소재"},
+ {id:"tim",name:"TIM",desc:"금속 · 액체금속 · 복합 TIM"},
+ {id:"bond",name:"본딩 장비",desc:"TC 본더 · 무플럭스 · 하이브리드 본더"},
+ {id:"mold",name:"몰딩 · 언더필",desc:"MR-MUF 몰딩 소재 · NCF"}
+];
+const CN={KR:"한국",JP:"일본",TW:"대만",US:"미국",EU:"유럽",SG:"싱가포르"};
+const COS=[
+ {seg:"sub",pos:"lead",n:"Ibiden",c:"JP",role:"AI 가속기용 고급 ABF 기판 선두, CoWoS 계열 주력 기판 공급",sig:"AI 서버 기판 생산 부하가 2024년 대비 2026년 1.8배, 2028년 2.5배로 제시. 빌드업 10-X-10에서 14-X-14까지 로드맵 공개",g:"2차·3차",imp:"고층 빌드업 표준을 주도하므로 TIM·열 설계 사양도 이 로드맵에 맞춰 준비해야 함"},
+ {seg:"sub",pos:"lead",n:"Unimicron",c:"TW",role:"대만 ABF 기판 선두",sig:"기판 공급 부족 국면의 가격 결정력 수혜 기업으로 거론",g:"3차",imp:"대만 패키징 생태계와 인접해 CoWoS 증설과 연동된 물량 흐름을 보는 지표"},
+ {seg:"sub",pos:"lead",n:"Ajinomoto",c:"JP",role:"ABF 빌드업 필름 소재 사실상 독점",sig:"Glass Core가 도입되어도 코어만 바뀌고 ABF 빌드업층은 유지되는 구조",g:"2차",imp:"Glass 전환이 ABF 수요를 없애지 않으므로 소재 단계 병목은 장기 지속"},
+ {seg:"sub",pos:"lead",n:"Nittobo",c:"JP",role:"저CTE T-glass 유리섬유 주력 공급",sig:"T-glass 부족이 2026년 10% 이상으로 추정되어 기판 생산의 별도 병목으로 작용",g:"확인 필요",imp:"설비가 있어도 유리섬유 확보 여부가 기판 출하를 결정하는 구간"},
+ {seg:"sub",pos:"grow",n:"삼성전기",c:"KR",role:"ABF 기판 증설과 Glass Core 병행",sig:"ABF 증설에 12억 달러 투입, 2027년 3분기 양산 목표. 세종 파일럿 라인에서 Glass 시제품 생산",g:"2차",imp:"부족기 물량과 Glass 전환을 모두 노리는 국내 핵심 플레이어. 열 설계 협력 파트너 후보"},
+ {seg:"sub",pos:"grow",n:"AT&S",c:"EU",role:"고급 ABF 기판 공급, 유럽 거점",sig:"주요 5개 ABF 공급사 중 하나",g:"3차",imp:"지역 공급망 다변화 수요의 수혜 가능"},
+ {seg:"sub",pos:"grow",n:"Shinko",c:"JP",role:"고급 패키지 기판 공급",sig:"주요 5개 ABF 공급사 중 하나",g:"3차",imp:"일본 소재 생태계와 결합된 기판 공급사"},
+ {seg:"sub",pos:"grow",n:"Kinsus · Nan Ya PCB",c:"TW",role:"대만 ABF 기판 공급",sig:"신규 증설 투자 착수 기업으로 거론",g:"3차",imp:"증설 속도가 부족률 완화의 변수"},
+ {seg:"sub",pos:"enter",n:"LG이노텍",c:"KR",role:"FC-BGA 기판 사업 확대",sig:"ABF 기판 병목 노출 기업 목록에 포함. AI 서버용 고급 기판 인증은 확대 단계",g:"3차",imp:"국내 기판 공급망의 두 번째 축. 고객 인증 진척이 관건"},
+ {seg:"sub",pos:"enter",n:"Absolics (SKC)",c:"KR",role:"Glass Core 기판 전문, 미국 조지아 생산",sig:"CHIPS Act 1억 달러 지원 공장에서 소량 생산, AMD MI400 등 고객용 인증 샘플 공급",g:"2차",imp:"Glass 첫 상용 인증을 따낼 가능성이 있는 국내 계열 기업. Glass 열 특성 검증 협력 대상"},
+ {seg:"sub",pos:"early",n:"Intel",c:"US",role:"Glass Core 기판 기술 선행 개발",sig:"두꺼운 Glass 코어로 유기 기판 대비 낮은 Warpage 시험 결과 공개",g:"3차",imp:"Glass 평탄도가 TIM 접촉 균일성에 주는 효과를 판단할 기준 데이터"},
+
+ {seg:"tim",pos:"lead",n:"Indium Corporation",c:"US",role:"인듐·인듐 합금 솔더 TIM, 액체금속 합금",sig:"ECTC 2026에서 무플럭스 진공 포름산 리플로우 기반 인듐 TIM 연구 발표",g:"3차",imp:"금속 TIM 공정 표준을 선점하는 기업. 국내 OSAT와의 공정 호환성이 비교 기준"},
+ {seg:"tim",pos:"lead",n:"Resonac",c:"JP",role:"NCF와 TIM 양쪽 상위 소재사",sig:"AI 칩용 NCF 캐파를 150억 엔 투자로 3.5~5배 확대 발표(2024)",g:"3차",imp:"TIM과 적층 소재를 함께 공급해 패키지 열 설계 전반에 영향력"},
+ {seg:"tim",pos:"grow",n:"Henkel",c:"EU",role:"반도체 패키지용 열·접착 소재",sig:"스타트업과 전략적 협력으로 차세대 TIM 확보 움직임",g:"3차",imp:"대형 소재사의 협력 모델은 국내 소재 기업의 진입 방식 참고 사례"},
+ {seg:"tim",pos:"grow",n:"Dow",c:"US",role:"실리콘 기반 열 소재",sig:"차세대 TIM을 스타트업 협력으로 추진",g:"3차",imp:"폴리머 계열 강자의 금속·복합 전환 대응을 관찰할 지표"},
+ {seg:"tim",pos:"grow",n:"Shin-Etsu",c:"JP",role:"실리콘 방열 소재",sig:"폴리머 TIM 주요 공급사",g:"확인 필요",imp:"폴리머 한계가 드러나는 구간에서 포지션 변화 관찰 필요"},
+ {seg:"tim",pos:"enter",n:"TOPCO",c:"TW",role:"인듐 TIM 공급망",sig:"인듐 TIM 전환 수혜 기업으로 거론",g:"3차",imp:"대만 패키징 생태계 내 금속 TIM 공급 경로"},
+ {seg:"tim",pos:"early",n:"Arika",c:"US",role:"액체금속 에멀전 TIM 특허",sig:"폴리머에 액체금속 방울을 분산해 두께를 제어하는 기술 특허",g:"3차",imp:"액체금속의 누출·부식 약점을 푸는 방식. 기술 제휴 대상 후보"},
+ {seg:"tim",pos:"early",n:"Boston Materials",c:"US",role:"탄소섬유 강화 액체금속 TIM",sig:"액체금속을 탄소섬유 매트릭스에 담은 제품 공개",g:"3차",imp:"Lid-less 구조의 TIM 이동 문제 대안"},
+
+ {seg:"bond",pos:"lead",n:"한미반도체",c:"KR",role:"HBM용 TC 본더 선두",sig:"SK hynix에 HBM4용 TC Bonder 4.5 Griffin 442억 원 공급 계약(2026.06). HBM TC 본더 점유율 70%대로 추정. 하이브리드 본더 전용 공장 2027년 상반기 완공 계획",g:"2차·3차",imp:"HBM4·4E가 TC 방식으로 연장되며 수요 유지. 하이브리드 전환 시점이 중장기 변수"},
+ {seg:"bond",pos:"grow",n:"ASMPT",c:"SG",role:"TC 본더, 무플럭스 본딩",sig:"SK hynix HBM4 TC 본더 약 50대 중 절반가량 공급으로 보도. 12단 HBM4 TC 본더를 복수 고객에서 먼저 수주했다고 밝힘",g:"2차",imp:"국내 장비사의 점유를 잠식하는 최대 경쟁자. 무플럭스 공정 역량이 차별점"},
+ {seg:"bond",pos:"grow",n:"한화세미텍",c:"KR",role:"TC 본더, 하이브리드 본더 개발",sig:"2025년 SK hynix 공급망 진입. 2세대 하이브리드 본더 시제품 성능 검증 단계. 한미반도체와 특허 분쟁 중",g:"2차·3차",imp:"국내 두 번째 장비 공급원. 특허 분쟁 결과가 점유 구도에 영향"},
+ {seg:"bond",pos:"lead",n:"BESI",c:"EU",role:"하이브리드 본더 세계 선두",sig:"Samsung이 도입 평가 중으로 보도. Micron의 차세대 단독 공급사 전망도 있음",g:"3차",imp:"하이브리드 본딩 본격화 시 표준 장비. 국내 장비사의 추격 기준점"},
+ {seg:"bond",pos:"enter",n:"SEMES",c:"KR",role:"Samsung 계열 장비사",sig:"Samsung HBM 본딩 장비 내재화 경로로 거론",g:"3차",imp:"Samsung 공급망의 내부 대안. 외부 장비사의 Samsung 진입 난이도에 영향"},
+ {seg:"bond",pos:"early",n:"Shinkawa",c:"JP",role:"TC 본더",sig:"Micron 공급망에서 제외 전망 보도",g:"3차 · 가설",imp:"고객 이탈 사례로 장비 공급 다변화 흐름을 보여줌"},
+
+ {seg:"mold",pos:"lead",n:"Namics",c:"JP",role:"SK hynix MR-MUF용 몰딩 소재 사실상 독점 공급",sig:"장기 독점 계약 만료가 다가온다는 보도. 공급망 단일 의존 위험 지적",g:"2차·3차",imp:"국내 몰딩 소재 대체 개발의 가장 명확한 타깃. 고열전도 필러 기술이 핵심"},
+ {seg:"mold",pos:"lead",n:"Resonac",c:"JP",role:"NCF 세계 상위 공급",sig:"AI 칩용 NCF 캐파 3.5~5배 확대 투자(2024 발표)",g:"3차",imp:"TC-NCF 진영(Samsung·Micron)의 핵심 소재 공급원"},
+ {seg:"mold",pos:"grow",n:"Nagase",c:"JP",role:"액상 몰딩·언더필 소재",sig:"Samsung이 MUF 소재 구매를 협의한 공급사로 보도(2024)",g:"2차",imp:"MUF 공급 다변화 시 1순위 대안 중 하나"},
+ {seg:"mold",pos:"enter",n:"삼성SDI",c:"KR",role:"MUF 컴파운드 자체 개발",sig:"Samsung과 협력해 자체 MUF 소재 개발 추진 보도(2024)",g:"2차",imp:"국내 몰딩 소재 내재화의 대표 사례. HBM 적용은 신뢰성 데이터 축적이 관건"}
+];
+
+const vc=document.getElementById("vc"), cd=document.getElementById("codetail"), cf=document.getElementById("cfilter");
+let vh='<div class="hd">영역</div>'+POS.map(p=>`<div class="hd">${p[1]}<small>${p[2]}</small></div>`).join("");
+SEGS.forEach((sg,si)=>{
+  const last=si===SEGS.length-1?" row-last":"";
+  vh+=`<div class="seg-name${last}"><b>${sg.name}</b><span>${sg.desc}</span></div>`;
+  POS.forEach(p=>{
+    vh+=`<div class="slot${last}">`+COS.map((c,i)=>c.seg===sg.id&&c.pos===p[0]?`<button type="button" class="co${c.c==="KR"?" kr":""}" data-i="${i}" data-c="${c.c}" aria-pressed="false"><abbr title="${CN[c.c]}">${c.c}</abbr>${c.n}</button>`:"").join("")+`</div>`;
+  });
+});
+vc.innerHTML=vh;
+function coPick(i){
+  const c=COS[i], sg=SEGS.find(x=>x.id===c.seg), p=POS.find(x=>x[0]===c.pos);
+  vc.querySelectorAll(".co").forEach(b=>b.setAttribute("aria-pressed",b.dataset.i==i?"true":"false"));
+  cd.innerHTML=`<div><h4>${c.n}</h4><div class="sub">${CN[c.c]} · ${sg.name} · ${p[1]}</div>
+  <dl><dt>역할</dt><dd>${c.role}</dd><dt>최근 신호</dt><dd>${c.sig}</dd><dt>근거 등급</dt><dd>${c.g}</dd></dl></div>
+  <div class="impl"><b>엔지니어 관점 포인트</b>${c.imp}</div>`;
+}
+vc.addEventListener("click",e=>{const b=e.target.closest(".co");if(b)coPick(+b.dataset.i);});
+["전체","KR","JP","TW","US","EU","SG"].forEach((k,idx)=>{
+  const b=document.createElement("button");b.type="button";b.textContent=k==="전체"?"전체":CN[k];
+  b.setAttribute("aria-pressed",idx===0?"true":"false");
+  b.addEventListener("click",()=>{
+    cf.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+    vc.querySelectorAll(".co").forEach(el=>el.classList.toggle("dim",k!=="전체"&&el.dataset.c!==k));
+  });
+  cf.appendChild(b);
+});
+coPick(COS.findIndex(c=>c.n==="한미반도체"));
+</script>
+</body>
+</html>

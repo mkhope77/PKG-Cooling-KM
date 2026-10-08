@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>냉각 심화 · DLC · CDU · Retrofit | Package & Thermal Intelligence</title>
+<meta name="description" content="AI 데이터센터 액체냉각의 DLC 부품, CDU, 기존 시설 Retrofit을 설계 변수, 개발 지표, 검증 방법, 미해결 과제로 정리한 패키지·냉각 개발 엔지니어용 심화 페이지">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F5; --paper:#FFFFFF; --ink:#1C252C; --ink-2:#4A5862; --line:#D5DCE0;
+  --cool:#0E7C86; --cool-soft:#DCEFF0; --warm:#E0A11B; --warm-soft:#FBF0D6; --warm-ink:#8A5E00; --hot:#C2361C; --hot-soft:#F7E1DC;
+  --sub:#5B4B8A; --sub-soft:#E8E4F3;
+  --serif:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+    --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --warm-soft:#3A2F14; --warm-ink:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+    --sub:#A594D9; --sub-soft:#2A2440;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10171C; --paper:#172027; --ink:#E6ECEF; --ink-2:#A3B1BA; --line:#2C3A44;
+  --cool:#39B3BC; --cool-soft:#15333A; --warm:#E9B44C; --warm-soft:#3A2F14; --warm-ink:#E9B44C; --hot:#E8634A; --hot-soft:#3A1F1A;
+  --sub:#A594D9; --sub-soft:#2A2440;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;word-break:keep-all}
+a{color:var(--cool)}
+:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--serif);line-height:1.3;margin:0}
+h2{font-size:clamp(1.55rem,3vw,2.1rem);max-width:30ch}
+h3{font-size:1.15rem}
+p{margin:0 0 1em;max-width:68ch}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.brand{font-family:var(--serif);font-weight:900;font-size:1.05rem;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:14px;height:28px;border-radius:3px;background:linear-gradient(var(--cool),var(--warm),var(--hot));display:inline-block}
+.crumb{font-size:.9rem;color:var(--ink-2)}
+.crumb a{color:var(--ink-2)}
+.subnav{display:flex;gap:6px;overflow-x:auto;padding:8px 0 10px}
+.subnav a{flex:none;font-size:.88rem;padding:6px 14px;border-radius:99px;border:1px solid var(--line);color:var(--ink);text-decoration:none;background:var(--paper)}
+.subnav a:hover{border-color:var(--ink-2)}
+
+.hero{padding:48px 0 36px}
+.hero h1{font-size:clamp(1.9rem,4.2vw,3rem);font-weight:900;max-width:18ch}
+.hero .lead{color:var(--ink-2);font-size:1.05rem;margin-top:18px}
+.q3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:30px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+@media (max-width:860px){.q3{grid-template-columns:1fr}}
+.q3 a{padding:20px 22px;text-decoration:none;color:var(--ink);border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:block}
+.q3 a:hover{background:var(--bg)}
+.q3 .t{font-size:.84rem;font-weight:600}
+.q3 .t.s{color:var(--sub)} .q3 .t.m{color:var(--warm-ink)} .q3 .t.h{color:var(--hot)}
+.q3 p{font-family:var(--serif);font-size:1.08rem;font-weight:700;margin:6px 0 0;line-height:1.45}
+
+section{padding:60px 0;border-top:1px solid var(--line)}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:28px;align-items:end}
+@media (max-width:860px){.sec-head{grid-template-columns:1fr}}
+.sec-head p{color:var(--ink-2);margin:0}
+
+/* swimlane roadmap */
+.lane-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+.lanes{display:grid;grid-template-columns:8.5rem repeat(5,minmax(150px,1fr));min-width:920px}
+.lanes .yr{padding:12px 14px;font-weight:600;font-size:.9rem;border-bottom:1px solid var(--line);color:var(--ink-2)}
+.lanes .yr.now{color:var(--ink)}
+.lanes .lname{padding:16px 14px;font-family:var(--serif);font-weight:700;border-bottom:1px solid var(--line);border-right:1px solid var(--line);display:flex;align-items:flex-start}
+.lanes .cell{padding:10px 8px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.lanes .cell.last,.lanes .lname.last{border-bottom:0}
+.ev{font:inherit;font-size:.82rem;line-height:1.4;text-align:left;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;color:var(--ink)}
+.ev.fact{background:var(--cool-soft);border-color:var(--cool)}
+.ev.plan{background:var(--warm-soft);border-color:var(--warm)}
+.ev.hyp{background:transparent;border:1px dashed var(--ink-2)}
+.ev[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.82rem;color:var(--ink-2);margin:14px 0 0}
+.legend span::before{content:"";display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:6px;vertical-align:0}
+.legend .f::before{background:var(--cool-soft);border:1px solid var(--cool)}
+.legend .p::before{background:var(--warm-soft);border:1px solid var(--warm)}
+.legend .h::before{border:1px dashed var(--ink-2)}
+.evdetail{margin-top:16px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 20px;min-height:120px}
+.evdetail h4{font-size:1.05rem;margin-bottom:6px}
+.evdetail .src{font-size:.8rem;color:var(--ink-2);margin:8px 0 0}
+
+/* track */
+.track-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px}
+@media (max-width:920px){.track-grid{grid-template-columns:1fr}}
+.qbox{border-left:4px solid var(--sub);padding:4px 0 4px 18px;margin-bottom:26px}
+.qbox.m{border-color:var(--warm)} .qbox.h{border-color:var(--hot)}
+.qbox b{display:block;font-size:.84rem;color:var(--ink-2);font-weight:500;margin-bottom:4px}
+.qbox p{font-family:var(--serif);font-size:1.2rem;font-weight:700;margin:0;line-height:1.45}
+.facts{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.facts li{padding:13px 0;border-bottom:1px solid var(--line);font-size:.93rem}
+.facts .meta{display:block;font-size:.76rem;color:var(--ink-2);margin-top:3px}
+.tag{font-size:.7rem;border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-right:6px;color:var(--ink-2);font-weight:600}
+.side{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px}
+.side h3{margin-bottom:12px}
+.side dl{margin:0;display:grid;gap:14px}
+.side dt{font-size:.82rem;color:var(--ink-2)}
+.side dd{margin:2px 0 0;font-size:.93rem}
+.side .kill{border-top:1px solid var(--line);padding-top:14px;margin-top:4px}
+.side .kill dt{color:var(--hot)}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);margin-top:26px}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:.89rem}
+th,td{padding:12px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--ink-2);background:var(--bg);font-size:.8rem}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.badge{display:inline-block;font-size:.74rem;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.b-mass{background:var(--cool-soft);color:var(--cool)}
+.b-pilot{background:var(--warm-soft);color:var(--warm-ink)}
+.b-pre{background:var(--hot-soft);color:var(--hot)}
+
+/* coupling matrix */
+.couple{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.couple{grid-template-columns:1fr}}
+.couple article{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px}
+.pair{font-size:.84rem;font-weight:600;margin-bottom:8px}
+.pair .s{color:var(--sub)} .pair .m{color:var(--warm-ink)} .pair .h{color:var(--hot)}
+.couple h3{font-size:1.05rem;margin-bottom:10px}
+.couple p{font-size:.92rem;color:var(--ink-2)}
+.couple .act{font-size:.88rem;border-top:1px solid var(--line);padding-top:10px;margin:0;color:var(--ink)}
+
+/* one pager */
+.onepager{background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:28px}
+.op-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:18px}
+@media (max-width:900px){.op-grid{grid-template-columns:1fr}}
+.op-grid h4{font-size:.95rem;margin-bottom:6px}
+.op-grid p,.op-grid ul{font-size:.9rem;margin:0}
+.op-grid ul{padding-left:1.1em}
+.rec{font-family:var(--serif);font-size:1.3rem;font-weight:700;max-width:40ch;line-height:1.45;margin:0}
+
+
+/* value chain map */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.filters button{font:inherit;font-size:.86rem;padding:6px 14px;border-radius:99px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.vc-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+.vc{display:grid;grid-template-columns:9.5rem repeat(4,minmax(170px,1fr));min-width:900px}
+.vc .hd{padding:12px 14px;font-size:.84rem;font-weight:600;color:var(--ink-2);border-bottom:1px solid var(--line);background:var(--bg)}
+.vc .hd small{display:block;font-weight:400;font-size:.75rem}
+.vc .seg-name{padding:16px 14px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.vc .seg-name b{font-family:var(--serif);display:block}
+.vc .seg-name span{font-size:.78rem;color:var(--ink-2);display:block;margin-top:4px;line-height:1.45}
+.vc .slot{padding:10px 8px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.vc .row-last{border-bottom:0}
+.co{font:inherit;font-size:.83rem;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.co abbr{font-size:.68rem;font-weight:600;text-decoration:none;padding:0 4px;border-radius:3px;background:var(--paper);border:1px solid var(--line);color:var(--ink-2)}
+.co.kr{border-color:var(--cool)} .co.kr abbr{color:var(--cool);border-color:var(--cool)}
+.co.dim{opacity:.25}
+.co[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.co .q{font-size:.7rem;color:var(--ink-2)}
+.codetail{margin-top:16px;display:grid;grid-template-columns:1.2fr .8fr;gap:22px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+@media (max-width:860px){.codetail{grid-template-columns:1fr}}
+.codetail h4{font-size:1.1rem;margin-bottom:4px}
+.codetail .sub{font-size:.84rem;color:var(--ink-2);margin-bottom:10px}
+.codetail dl{margin:0;display:grid;grid-template-columns:5.5rem 1fr;gap:6px 12px;font-size:.9rem}
+.codetail dt{color:var(--ink-2)} .codetail dd{margin:0}
+.codetail .impl{border-left:3px solid var(--cool);padding-left:14px;font-size:.92rem}
+.codetail .impl b{display:block;font-size:.8rem;color:var(--cool);margin-bottom:4px}
+.conc{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:26px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+@media (max-width:900px){.conc{grid-template-columns:1fr}}
+.conc div{padding:18px 20px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.conc h4{font-size:1rem;margin-bottom:6px}
+.conc .lvl{font-size:.78rem;font-weight:600;margin-bottom:8px;display:inline-block;padding:2px 8px;border-radius:99px}
+.lvl.hi{background:var(--hot-soft);color:var(--hot)} .lvl.md{background:var(--warm-soft);color:var(--warm-ink)} .lvl.lo{background:var(--cool-soft);color:var(--cool)}
+.conc p{font-size:.88rem;color:var(--ink-2);margin:0}
+.note{font-size:.82rem;color:var(--ink-2);margin-top:12px}
+footer{border-top:1px solid var(--line);padding:32px 0 48px;font-size:.84rem;color:var(--ink-2)}
+footer p{max-width:none}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="nav">
+      <a class="brand" href="index.html"><i aria-hidden="true"></i>Package & Thermal Intelligence</a>
+      <span class="crumb"><a href="index.html">홈</a> / <a href="packaging.html">패키징 심화</a> / 냉각 심화</span>
+    </div>
+    <nav class="subnav" aria-label="페이지 내 이동">
+      <a href="#roadmap">통합 로드맵</a>
+      <a href="#dlc">DLC 부품</a>
+      <a href="#cdu">CDU</a>
+      <a href="#retrofit">Retrofit</a>
+      <a href="#valuechain">밸류체인 맵</a>
+      <a href="#coupling">패키지 연결</a>
+      <a href="#onepager">개발 방향 요약</a>
+      <a href="#sources">근거</a>
+      <a href="koolmicro.html">KoolMicro IMMC</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap hero">
+  <h1>Rack 밖으로 열을 빼내는 세 개의 관문</h1>
+  <p class="lead">패키지가 만든 열은 Cold Plate와 퀵커넥터를 지나 CDU로, 다시 건물의 열 방출 설비로 이동합니다. 2026년 하반기부터 차세대 AI Rack은 액체냉각을 기본 사양으로 출하되며, 칩 발열과 Rack 전력이 오르는 속도가 냉각 구간별 설계 여유를 빠르게 줄이고 있습니다. 각 구간에서 다음 세대 개발 전에 답해야 할 기술 질문부터 시작합니다.</p>
+  <div class="q3">
+    <a href="#dlc"><span class="t s">DLC 부품</span><p>CDU 압력을 늘리지 않고 유량과 열전달을 동시에 키울 수 있는가</p></a>
+    <a href="#cdu"><span class="t m">CDU</span><p>MW급 용량에서 한 대 고장의 영향 범위를 어떻게 제한할 것인가</p></a>
+    <a href="#retrofit"><span class="t h">Retrofit</span><p>공랭 기준 시설에서 시설 배관 없이 어디까지 액체냉각을 올릴 수 있는가</p></a>
+  </div>
+</div>
+
+<section id="roadmap">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>2026~2030 냉각 통합 로드맵</h2>
+      <p>칩 발열, Rack 전력, 시설 준비 속도가 서로 다른 속도로 움직입니다. 항목을 누르면 근거와 사업적 의미가 표시됩니다. 확인된 사실, 기업 계획, 업계 전망을 구분합니다.</p>
+    </div>
+    <div class="lane-wrap"><div class="lanes" id="lanes"></div></div>
+    <div class="legend"><span class="f">확인된 사실</span><span class="p">기업 계획·목표</span><span class="h">업계 전망·가설</span></div>
+    <div class="evdetail" id="evdetail" aria-live="polite"></div>
+  </div>
+</section>
+
+<section id="dlc">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>DLC 부품: 칩 위의 Cold Plate와 Rack 안의 배관</h2>
+      <p>Cold Plate는 칩의 열을, 퀵커넥터와 매니폴드는 Rack 전체의 냉각수 분배를 담당합니다. 칩 설계사가 냉각 사양을 직접 표준화하면서 부품 공급 구조가 OEM 중심에서 칩 설계사 중심으로 이동했습니다.</p>
+    </div>
+    <div class="track-grid">
+      <div>
+        <div class="qbox"><b>엔지니어링 질문</b><p>칩 발열이 2 kW 안팎으로 오를 때 단상 Cold Plate의 미세 채널과 유로 설계로 어디까지 버틸 수 있고, 언제 2-phase로 넘어가야 하는가</p></div>
+        <ul class="facts">
+          <li>NVIDIA는 Vera Rubin의 Cold Plate 조달을 중앙화하고 GTC 2026에서 AVC, Cooler Master, Jentech, Delta 4개 공급사를 지명했습니다.<span class="meta"><span class="tag">FACT</span>DIGITIMES · 2차 · 2026.03</span></li>
+          <li>AI 칩의 액체냉각 비중은 2025년 약 33%에서 2026년 53%로 높아질 전망이며, 냉각 대상이 GPU·CPU에서 네트워크 카드, 전원 보드, 광 모듈로 넓어지고 있습니다.<span class="meta"><span class="tag">MODELED</span>TrendForce 인용 · 2차 · 2026.08</span></li>
+          <li>Rubin은 CDU 압력을 높이지 않고 유량을 늘려 Blackwell 대비 거의 두 배의 냉각 성능을 내도록 전체 유로를 최적화했습니다. 이에 따라 퀵커넥터가 1인치에서 2인치급으로 커질 것으로 예상됩니다.<span class="meta"><span class="tag">FACT</span>SemiAnalysis · 2차 · 2026.03</span></li>
+          <li>AVC는 3분기부터 Rubin용 Cold Plate 출하를 시작하고 AWS, Google, Meta, OpenAI의 ASIC 공급망에도 진입했습니다.<span class="meta"><span class="tag">FACT</span>TrendForce 인용 · 2차 · 2026.08</span></li>
+          <li>Rubin 칩과 함께 패키징되는 Heat Spreader는 기판 Warpage 문제로 분리형 대신 일체형이 임시 채택되었고, Jentech이 단독 공급하는 것으로 보도됩니다.<span class="meta"><span class="tag">FACT</span>TrendForce 인용 · 2차 · 2026.08</span></li>
+        </ul>
+      </div>
+      <aside class="side">
+        <h3>엔지니어링 판단</h3>
+        <dl>
+          <div><dt>핵심 설계 변수</dt><dd>채널 폭과 핀 형상, 유량, 압력 강하, 접촉면 평탄도, 냉각수 입구 온도</dd></div>
+          <div><dt>개발 지표와 방향</dt><dd>같은 압력 강하에서 열저항 최소화, Hot Spot 위치에 맞춘 국부 열전달 강화</dd></div>
+          <div><dt>검증 방법</dt><dd>열 시험 차량(TTV)으로 열저항·압력 강하 곡선 측정, 유동 해석과 실측 상관, 장기 부식·막힘 시험</dd></div>
+          <div><dt>미해결 과제</dt><dd>보조 부품(NIC·광 모듈)까지 확대되는 소형 Cold Plate, 도금 품질과 장기 신뢰성, 2-phase 냉매 규제</dd></div>
+          <div class="kill"><dt>방향 전환 신호</dt><dd>칩 TDP가 단상 냉각의 실용 한계에 근접하거나 칩 설계사가 2-phase 사양을 공개할 때</dd></div>
+        </dl>
+      </aside>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>부품</th><th>기능</th><th>기술 변화</th><th>성숙도</th><th>패키지 연결점</th><th>개발 난점</th></tr></thead>
+        <tbody>
+          <tr><td>GPU·CPU Cold Plate</td><td>칩 열을 냉각수로 전달</td><td>미세 채널 고도화, 접촉면 도금</td><td><span class="badge b-mass">양산 적용</span></td><td>TIM2·Lid 평탄도, Hot Spot 위치</td><td>칩 설계사 열 사양 충족, 대량 생산 편차</td></tr>
+          <tr><td>보조 부품 Cold Plate</td><td>NIC·전원·광 모듈 냉각</td><td>Fanless Rack 확산으로 대상 확대</td><td><span class="badge b-pilot">실증</span></td><td>광 모듈 온도 민감도(CPO)</td><td>소형화와 다수 부품 동시 냉각</td></tr>
+          <tr><td>Heat Spreader</td><td>칩 표면 열 확산</td><td>분리형 설계는 Warpage로 보류</td><td><span class="badge b-mass">양산 적용</span></td><td>기판 Warpage에 직접 영향</td><td>기판 Warpage와의 정합</td></tr>
+          <tr><td>퀵커넥터 (UQD·MQD)</td><td>누수 없는 탈착 연결</td><td>유량 증가로 대구경화</td><td><span class="badge b-mass">양산 적용</span></td><td>간접</td><td>대구경화 시 누수와 압력 손실</td></tr>
+          <tr><td>매니폴드·배관</td><td>Rack 내 냉각수 분배</td><td>Tray·Rack 매니폴드 표준화</td><td><span class="badge b-mass">양산 적용</span></td><td>간접</td><td>유량 균등 분배</td></tr>
+          <tr><td>2-phase Cold Plate</td><td>상변화로 열 흡수</td><td>칩 발열 증가 시 대안</td><td><span class="badge b-pre">PoC 전</span></td><td>국부 고열속 대응</td><td>냉매 규제, 기포 거동 제어</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="cdu">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>CDU: 대형화와 통합의 경쟁</h2>
+      <p>CDU는 냉각수의 온도, 압력, 유량을 제어하는 액체냉각의 심장입니다. 용량은 수백 kW에서 MW급으로 커지고, 대형 설비사가 전문 기업을 인수하며 칠러부터 칩까지 통합 공급하는 구도로 재편되고 있습니다.</p>
+    </div>
+    <div class="track-grid">
+      <div>
+        <div class="qbox m"><b>엔지니어링 질문</b><p>CDU가 MW급으로 대형화될 때 유량·압력·온도 제어의 응답성과 이중화, 장애 영향 범위를 어떤 구조로 균형 잡을 것인가</p></div>
+        <ul class="facts">
+          <li>Ecolab은 2026년 7월 2일 직접 액체냉각 전문기업 CoolIT Systems 인수를 47억 5천만 달러에 완료했습니다. Schneider는 앞서 Motivair를 인수해 CDU와 Cold Plate를 확보했습니다.<span class="meta"><span class="tag">FACT</span>업계 분석 · 3차 · 2026.09</span></li>
+          <li>Delta는 Computex 2026에서 2.4 MW In-row CDU와 3 MW 액체-액체 CDU, Vera Rubin NVL72용 Cold Plate를 전력 변환 장비와 함께 공개했습니다.<span class="meta"><span class="tag">FACT</span>업계 분석 · 3차 · 2026.09</span></li>
+          <li>LG전자는 2026년 7월 600 kW급 CDU로 국내 최초 NVIDIA 품질 인증을 받았고, 9월에는 1 MW급에 이어 2.5 MW급 CDU까지 NVIDIA DSX Ready 승인을 받았습니다.<span class="meta"><span class="tag">FACT</span>ZDNet Korea · 2차 · 2026.09</span></li>
+          <li>LG전자는 2026년 상반기 AI 데이터센터 냉각 솔루션 수주 약 6,000억 원을 기록했습니다.<span class="meta"><span class="tag">FACT</span>딜사이트 · 2차 · 2026.09</span></li>
+          <li>CDU는 충분한 용량과 비상 전원이 필요하며, CDU 수를 줄이면 복잡도는 낮아지지만 한 대 고장 시 영향 범위가 커지는 균형 문제가 있습니다.<span class="meta"><span class="tag">FACT</span>Jabil · 2차 · 2026.07</span></li>
+        </ul>
+      </div>
+      <aside class="side">
+        <h3>엔지니어링 판단</h3>
+        <dl>
+          <div><dt>핵심 설계 변수</dt><dd>펌프 용량과 양정, 열교환기 접근 온도, 제어 루프 응답, 이중화 구성, 센서 신뢰성</dd></div>
+          <div><dt>개발 지표와 방향</dt><dd>부하 급변 시 공급 온도 안정성, 펌프 효율, 센서 고장 시에도 제어 유지</dd></div>
+          <div><dt>검증 방법</dt><dd>부하 계단 시험으로 온도 응답 측정, 펌프 고장 전환 시험, 장기 운전 중 냉각수 수질 관리 검증</dd></div>
+          <div><dt>미해결 과제</dt><dd>대형화에 따른 단일 장애 영향, 냉각수 수질과 부식 관리, CDU와 칠러 간 통합 제어</dd></div>
+          <div class="kill"><dt>방향 전환 신호</dt><dd>칩 설계사가 온수 냉각 입구 온도 범위를 상향하거나 시설급 CDU가 표준 구성으로 자리 잡을 때</dd></div>
+        </dl>
+      </aside>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>CDU 유형</th><th>용량 범위</th><th>적합 환경</th><th>강점</th><th>한계</th><th>성숙도</th></tr></thead>
+        <tbody>
+          <tr><td>Rack 내장형</td><td>수백 kW</td><td>소규모 확장, Colo 부분 전환</td><td>설치 간편, 장애 영향 국한</td><td>대수 증가로 관리 부담</td><td><span class="badge b-mass">양산 적용</span></td></tr>
+          <tr><td>In-row</td><td>1~2.5 MW</td><td>고밀도 Row 단위 AI 클러스터</td><td>Rack 여러 대를 효율적으로 커버</td><td>설치 공간과 배관 설계 필요</td><td><span class="badge b-mass">양산 적용</span></td></tr>
+          <tr><td>시설급 액체-액체</td><td>2~3 MW 이상</td><td>신축 AI Factory</td><td>규모의 경제, 온수 냉각 연계</td><td>단일 장애 영향 범위 큼</td><td><span class="badge b-pilot">실증</span></td></tr>
+          <tr><td>액체-공기 (L2A)</td><td>수십~수백 kW</td><td>시설 수배관이 없는 기존 건물</td><td>건물 개조 최소화</td><td>용량 한계, 공조 부하 증가</td><td><span class="badge b-mass">양산 적용</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="retrofit">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Retrofit: 준비되지 않은 시설이 가장 큰 시장</h2>
+      <p>신축 시설은 처음부터 액체냉각으로 설계하지만, 대부분의 운영 중인 데이터센터는 공랭 기준으로 지어졌습니다. 전력 인입, 배관, 바닥 하중, 운영 인력까지 바꿔야 하는 Retrofit은 장비보다 단계 설계와 사업모델이 승부처입니다.</p>
+    </div>
+    <div class="track-grid">
+      <div>
+        <div class="qbox h"><b>엔지니어링 질문</b><p>기존 공랭 시설에서 전력 인입, 배관, 바닥 하중 제약을 넘지 않고 단계적으로 Rack 밀도를 올리려면 어떤 냉각 구성이 기술적으로 성립하는가</p></div>
+        <ul class="facts">
+          <li>평균 Rack 밀도는 2025년 약 16 kW에서 2026년 27 kW로 늘었지만, 50~70 kW Rack을 지원할 준비가 된 운영자는 5곳 중 1곳에 불과합니다.<span class="meta"><span class="tag">FACT</span>Uptime 조사 인용 · Schneider · 1차 · 2026.07</span></li>
+          <li>공랭의 한계는 Rack당 약 30~40 kW로, Rubin NVL72가 230 kW 이상, Rubin Ultra가 2027년 600 kW를 넘을 것으로 예상되는 흐름을 따라갈 수 없습니다.<span class="meta"><span class="tag">FACT</span>Jabil · 2차 · 2026.07</span></li>
+          <li>Direct-to-chip은 Rack 폼팩터와 정비 방식을 유지하고 CDU와 배관만 추가하면 되어 Retrofit에 가장 유리한 방식으로 평가됩니다.<span class="meta"><span class="tag">MODELED</span>업계 분석 · 3차 · 2026.07</span></li>
+          <li>후면 도어 열교환기(RDHx)는 개조가 쉬워 완만한 밀도 증가에 적합하지만, 현재 AI 하드웨어가 요구하는 수준에는 크게 못 미칩니다.<span class="meta"><span class="tag">FACT</span>Schneider · 1차 · 2026.07</span></li>
+          <li>Direct-to-chip 액체냉각은 PUE 1.10~1.20 수준을 달성해 냉각에 쓰던 전력을 연산에 돌릴 수 있습니다.<span class="meta"><span class="tag">FACT</span>Schneider · 1차 · 2026.07</span></li>
+        </ul>
+      </div>
+      <aside class="side">
+        <h3>엔지니어링 판단</h3>
+        <dl>
+          <div><dt>핵심 설계 변수</dt><dd>Rack당 전력, 시설 냉각수 유무, 공조 여유 용량, 바닥 하중, 배관 경로</dd></div>
+          <div><dt>개발 지표와 방향</dt><dd>단계별 전환 시 Rack 밀도 상한과 PUE, 전환 공사 중 운영 연속성</dd></div>
+          <div><dt>검증 방법</dt><dd>시범 구역 실측(온도·유량·전력), 공조 부하 변화 계측, 누수 감지와 차단 시험</dd></div>
+          <div><dt>미해결 과제</dt><dd>L2A 방식의 용량 한계, 기존 공조와 액체냉각 혼재 운영, 운영 인력의 액체냉각 경험 부족</dd></div>
+          <div class="kill"><dt>방향 전환 신호</dt><dd>차세대 Rack 전력이 부분 개조로 감당할 수 없는 수준에 이르러 전용 구역 신설이 불가피해질 때</dd></div>
+        </dl>
+      </aside>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>전환 단계</th><th>대응 밀도</th><th>주요 조치</th><th>시설 변경 규모</th><th>검증 항목</th><th>핵심 리스크</th></tr></thead>
+        <tbody>
+          <tr><td>1단계 · 공랭 보강</td><td>약 30~40 kW까지</td><td>RDHx, 차폐 강화, 팬 효율화</td><td>작음</td><td>입·출구 공기 온도, 재순환 여부</td><td>AI 고객 요구에 곧 미달</td></tr>
+          <tr><td>2단계 · L2A 액체냉각</td><td>수십 kW</td><td>액체-공기 CDU로 시설 배관 없이 DLC 도입</td><td>유량 균등 분배</td><td>공조 부하 증가량, CDU 방열 공기 처리</td><td>공조 부하 증가, 용량 한계</td></tr>
+          <tr><td>3단계 · 시설 수배관 DLC</td><td>100 kW 이상</td><td>시설 냉각수 루프, In-row CDU, 누수 감지</td><td>큼</td><td>누수 감지·차단 응답, 수질 관리</td><td>공사 중 운영 중단, 바닥 하중</td></tr>
+          <tr><td>4단계 · 고밀도 전용 구역</td><td>200 kW 이상</td><td>MW급 CDU, 온수 냉각, 전력 인입 증설</td><td>매우 큼</td><td>부하 급변 응답, 이중화 전환 시간</td><td>전력 인입 일정, Anchor 고객 의존</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="valuechain">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>국내외 냉각 기업 밸류체인 맵 · 협력과 벤치마크 대상</h2>
+      <p>칩 인접 부품부터 시설 설비까지 다섯 개 영역의 주요 기업을 포지션별로 배치했습니다. 기업을 누르면 역할, 최근 신호, 근거 등급, 엔지니어 관점 포인트이 표시됩니다.</p>
+    </div>
+    <div class="filters" role="group" aria-label="국가 필터" id="cfilter"></div>
+    <div class="vc-wrap"><div class="vc" id="vc"></div></div>
+    <p class="note">기술 동향을 확인하거나 공동 개발·벤치마크 대상을 찾을 때 참고하세요. 포지션 기준 · 선도: 해당 영역 양산 주력 공급 · 확대: 공급 중이며 점유 확대 · 진입: 신규 인증 또는 초기 공급 · 초기 기술: 차세대 방식으로 존재감. 파란 테두리는 국내 기업입니다. 시장 점유율은 조사기관마다 기준이 달라 표시하지 않았습니다.</p>
+    <div class="codetail" id="codetail" aria-live="polite"></div>
+    <div class="conc">
+      <div><span class="lvl hi">칩 설계사 지명 구조</span><h4>Cold Plate</h4><p>NVIDIA가 공급사를 직접 지정하면서 대만 기업 중심으로 고착되었습니다. 명단 밖 기업에게는 ASIC 가속기와 보조 부품 냉각이 현실적 진입로입니다.</p></div>
+      <div><span class="lvl md">규격 표준화 · 정밀 가공</span><h4>퀵커넥터 · 매니폴드</h4><p>OCP 규격 기반으로 호환성이 중요해졌고 유량 증가로 대구경화가 진행됩니다. 소수 유럽·미국 기업이 강세입니다.</p></div>
+      <div><span class="lvl md">인수합병으로 통합 가속</span><h4>CDU</h4><p>대형 설비사가 전문 기업을 인수하며 칩부터 칠러까지 묶어 공급합니다. 국내에서는 LG전자가 NVIDIA 인증을 연이어 확보했습니다.</p></div>
+      <div><span class="lvl lo">초기 시장 · 표준 형성 중</span><h4>액침 · 냉각액</h4><p>액침 탱크와 절연 냉각액은 아직 표준이 정해지지 않았습니다. 정유·화학 기업이 냉각액으로 진입하는 경로가 열려 있습니다.</p></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>영역</th><th>국내 기업 현재 위치</th><th>협력 기회</th><th>필요한 기술 조합</th><th>핵심 리스크</th></tr></thead>
+        <tbody>
+          <tr><td>Cold Plate</td><td>칩 설계사 지명 공급망에 국내 기업 부재</td><td>국내 메모리·ASIC 고객과 보조 부품 냉각</td><td>미세 채널 가공 + 패키지 열 데이터 공동 설계</td><td>대만 공급망의 가격·속도 경쟁력</td></tr>
+          <tr><td>CDU</td><td>LG전자 600 kW·1 MW·2.5 MW NVIDIA 승인, 상반기 수주 약 6,000억 원</td><td>하이퍼스케일러 직접 공급, 국내외 AI 데이터센터 프로젝트</td><td>CDU + 칠러 + 통합 관리 소프트웨어</td><td>대형 통합사와의 가격 경쟁, 글로벌 서비스망</td></tr>
+          <tr><td>시설 · 열 방출</td><td>LG전자 칠러와 공조 핵심 부품 자체 개발</td><td>칠러에서 CDU까지 일괄 공급, 온수 냉각 연계</td><td>칠러 + CDU + 에너지 운영 플랫폼</td><td>지역별 냉매 규제</td></tr>
+          <tr><td>액침 · 냉각액</td><td>SK엔무브 냉각액, LG전자·GRC 공동 개발</td><td>액침 표준 형성기 선점, 친환경 냉매·냉각액</td><td>탱크 시스템 + 절연 냉각액 + 서버 호환 인증</td><td>액침 수요 성장 속도, 서버 보증 문제</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="coupling">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>패키지와 냉각이 만나는 지점</h2>
+      <p>냉각 설계의 여유는 패키지에서 이미 정해집니다. 아래 연결 고리는 <a href="packaging.html">패키징 심화</a>의 기판, TIM, HBM 분석과 이어집니다.</p>
+    </div>
+    <div class="couple">
+      <article>
+        <div class="pair"><span class="s">기판</span> × <span class="m">Heat Spreader</span></div>
+        <h3>기판 Warpage가 방열 구조를 바꿨다</h3>
+        <p>Rubin은 냉각 효율을 높이려던 분리형 Heat Spreader 대신 기판 Warpage 문제로 일체형을 임시 채택했습니다. 패키지 평탄도가 냉각 설계의 상한을 정한 사례입니다.</p>
+        <p class="act">조합 제안: 기판 Warpage 데이터와 Heat Spreader·Cold Plate 접촉면을 함께 설계</p>
+      </article>
+      <article>
+        <div class="pair"><span class="m">TIM</span> × <span class="h">온수 냉각</span></div>
+        <h3>냉각수 온도가 오르면 TIM 여유가 줄어든다</h3>
+        <p>칠러 없이 온수로 냉각하면 시설 에너지는 줄지만 칩 온도 여유가 줄어듭니다. 그만큼 패키지 안 열저항을 더 낮춰야 하므로 금속 TIM의 가치가 커집니다.</p>
+        <p class="act">조합 제안: 냉각수 입구 온도별 필요 TIM 열저항을 역산해 소재 사양 제안</p>
+      </article>
+      <article>
+        <div class="pair"><span class="h">HBM</span> × <span class="s">Cold Plate</span></div>
+        <h3>Hot Spot 위치에 맞춘 채널 설계</h3>
+        <p>로직 Die와 HBM 스택은 발열 밀도와 높이가 다릅니다. Cold Plate 미세 채널을 패키지 Hot Spot 지도에 맞추면 같은 유량으로 더 많은 열을 뺄 수 있습니다.</p>
+        <p class="act">조합 제안: 메모리사 적층 열 데이터와 Cold Plate 채널 배치를 공동 최적화</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="onepager">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>개발 방향 요약</h2>
+      <p>팀 내 기술 리뷰나 개발 계획서에 옮길 수 있도록 방향, 지표, 필요한 역량, 방향 전환 신호를 한 장으로 정리했습니다.</p>
+    </div>
+    <div class="onepager">
+      <p class="rec">개발 방향: 칩 인접부터 시설까지 냉각 구간마다 설계 여유가 줄고 있어, 구간별 최적화만으로는 한계에 부딪힙니다. 냉각수 입구 온도부터 칩 Junction 온도까지 하나의 열저항 예산으로 관리하고, 패키지 개발과 같은 모델과 측정 기준을 공유하는 것이 다음 세대 냉각 개발의 출발점입니다.</p>
+      <div class="op-grid"><div><h4>지금 집중할 과제</h4><ul><li>Hot Spot 맞춤 미세 채널 Cold Plate</li><li>CDU 부하 응답과 이중화 제어</li><li>L2A 기반 단계 Retrofit 구성</li></ul></div><div><h4>핵심 지표</h4><ul><li>같은 압력 강하에서의 열저항</li><li>부하 급변 시 공급 온도 변동</li><li>전환 단계별 Rack 밀도 상한</li></ul></div><div><h4>필요한 측정·모델</h4><ul><li>열 시험 차량(TTV) 시험 설비</li><li>Rack 단위 유동·열 해석</li><li>시설 실측 데이터 수집 체계</li></ul></div><div><h4>방향 전환 신호</h4><ul><li>칩 TDP의 단상 냉각 한계 근접</li><li>온수 냉각 입구 온도 상향</li><li>Rack 전력 600 kW급 도달</li></ul></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="sources">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>근거 원장</h2>
+      <p>2차·3차 자료는 공시, 기업 발표, 표준 문서로 교차 확인 후 사실로 승격합니다. 시장 규모 추정치는 조사기관마다 차이가 커 페이지에 넣지 않았습니다.</p>
+    </div>
+    <div class="tbl-wrap" style="margin-top:0">
+      <table>
+        <thead><tr><th>주제</th><th>등급</th><th>기준 시점</th><th>원문</th></tr></thead>
+        <tbody>
+          <tr><td>Vera Rubin Cold Plate 공급사 4곳 지명</td><td>2차</td><td>2026.03</td><td><a href="https://www.digitimes.com/news/a20260318PD231/nvidia-rubin-liquid-cooling-ai-server-launch.html" target="_blank" rel="noopener">DIGITIMES</a></td></tr>
+          <tr><td>액체냉각 비중 전망, AVC 출하, Heat Spreader 일체형</td><td>2차</td><td>2026.08</td><td><a href="https://iconnect007.com/article/151221/liquid-cooling-to-reach-53-of-highend-ai-infrastructure-in-2026/151218/ein" target="_blank" rel="noopener">I-Connect007</a></td></tr>
+          <tr><td>Rubin 유로 최적화, 퀵커넥터 대구경화</td><td>2차</td><td>2026.03</td><td><a href="https://newsletter.semianalysis.com/p/vera-rubin-extreme-co-design-an-evolution" target="_blank" rel="noopener">SemiAnalysis</a></td></tr>
+          <tr><td>Rubin 생산과 냉각 공급망 양산 검증</td><td>3차</td><td>2026.09</td><td><a href="https://global.iteschina.com/ru/news/details/2995" target="_blank" rel="noopener">ITES China</a></td></tr>
+          <tr><td>Stäubli UQD·MQD 퀵커넥터</td><td>1차</td><td>2026</td><td><a href="https://www.staubli.com/global/en/news/global/2026/uqd-mqd-vera-rubin-nvidia-staubli.html" target="_blank" rel="noopener">Stäubli</a></td></tr>
+          <tr><td>Ecolab의 CoolIT 인수, Delta CDU 공개</td><td>3차</td><td>2026.09</td><td><a href="https://exoswan.com/data-center-cooling-stocks" target="_blank" rel="noopener">Exoswan</a></td></tr>
+          <tr><td>주요 CDU 공급사 용량 범위</td><td>3차</td><td>2026.08</td><td><a href="https://dataad.com/post/ai-data-center-cdu-manufacturers" target="_blank" rel="noopener">DATAAD</a></td></tr>
+          <tr><td>LG전자 CDU NVIDIA 승인 (1 MW · 2.5 MW)</td><td>2차</td><td>2026.09</td><td><a href="https://zdnet.co.kr/view/?no=20260924111254" target="_blank" rel="noopener">ZDNet Korea</a></td></tr>
+          <tr><td>LG전자 600 kW 인증, 상반기 수주</td><td>2차</td><td>2026.09</td><td><a href="https://dealsite.co.kr/articles/168926" target="_blank" rel="noopener">딜사이트</a></td></tr>
+          <tr><td>LG전자 액침냉각 GRC·SK엔무브 공동 개발</td><td>1차</td><td>2026.04</td><td><a href="https://www.lg.co.kr/media/release/30063" target="_blank" rel="noopener">LG 보도자료</a></td></tr>
+          <tr><td>Rack 밀도, PUE, 고밀도 준비 운영자 비율</td><td>1차</td><td>2026.07</td><td><a href="https://blog.se.com/datacenter/2026/07/28/data-center-power-density-planning-liquid-cooled-ai-data-centers-around-grid-and-power-constraints/" target="_blank" rel="noopener">Schneider Electric</a></td></tr>
+          <tr><td>공랭 한계, CDU 이중화와 장애 범위</td><td>2차</td><td>2026.07</td><td><a href="https://jabil.com/blog/liquid-cooling-higher-density-racks.html" target="_blank" rel="noopener">Jabil</a></td></tr>
+          <tr><td>RDHx 한계, 신축 설계 기준</td><td>1차</td><td>2026.07</td><td><a href="https://blog.se.com/datacenter/2026/07/30/planning-liquid-cooling-for-new-ai-data-centre-builds-in-india/" target="_blank" rel="noopener">Schneider Electric</a></td></tr>
+          <tr><td>Direct-to-chip Retrofit 적합성</td><td>3차</td><td>2026.07</td><td><a href="https://gainam.com/insights/ai-data-center-cooling-comparison" target="_blank" rel="noopener">Gainam</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Package & Thermal Intelligence · 공개 정보 기반 전략 프레임워크입니다. 투자 권유나 특정 기업 평가가 아니며, 수치와 기업 계획은 연결된 원문에서 재확인해야 합니다. <a href="index.html">홈</a> · <a href="packaging.html">패키징 심화</a></p>
+  </div>
+</footer>
+
+<script>
+const YEARS=["2026","2027","2028","2029","2030"];
+const LANES=[
+ {name:"DLC 부품", events:[
+  {y:"2026",k:"fact",t:"Cold Plate 공급사 중앙 지명",d:"NVIDIA가 Rubin Cold Plate 조달을 중앙화하고 4개 공급사를 지명했습니다. 명단 밖 기업은 다음 인증 주기나 비 NVIDIA 가속기로 진입해야 합니다.",s:"DIGITIMES · 2차"},
+  {y:"2026",k:"fact",t:"액체냉각 비중 53% 전망",d:"AI 칩의 액체냉각 비중이 절반을 넘고 네트워크·전원·광 모듈로 대상이 넓어집니다. 보조 부품 냉각이 새 시장으로 열립니다.",s:"TrendForce 인용 · 2차"},
+  {y:"2026",k:"plan",t:"퀵커넥터 대구경화",d:"유량 증가에 맞춰 1인치 퀵커넥터가 2인치급으로 커질 것으로 예상됩니다. 정밀 가공 역량을 가진 소수 기업의 수혜가 큽니다.",s:"SemiAnalysis · 2차"},
+  {y:"2027",k:"hyp",t:"칩 TDP 2 kW 안팎",d:"차세대 GPU의 단일 칩 발열이 2 kW 안팎으로 오를 것이라는 전망이 있습니다. 실현 시 2-phase Cold Plate 검토가 앞당겨집니다.",s:"업계 전망 · 3차"},
+  {y:"2029",k:"hyp",t:"2-phase 칩 냉각 확대",d:"단상 액체의 열 흡수 한계에 가까워지면 상변화 냉각이 대안이 됩니다. 냉매 규제와 표준 정립이 전제입니다.",s:"업계 전망 · 가설"}
+ ]},
+ {name:"CDU", events:[
+  {y:"2026",k:"fact",t:"CoolIT 인수 완료",d:"Ecolab이 CoolIT Systems 인수를 7월에 완료했습니다. 대형사가 전문 기업을 흡수하며 칩부터 칠러까지 통합 공급하는 구도가 강해집니다.",s:"업계 분석 · 3차"},
+  {y:"2026",k:"fact",t:"LG전자 2.5 MW CDU 승인",d:"LG전자가 600 kW 인증에 이어 9월 1 MW, 2.5 MW급 CDU까지 NVIDIA 승인을 받았습니다. 국내 기업의 MW급 라인업이 갖춰졌습니다.",s:"ZDNet Korea · 2차"},
+  {y:"2026",k:"fact",t:"3 MW급 CDU 등장",d:"Delta가 3 MW 액체-액체 CDU를 공개했습니다. 시설급 대형 CDU 경쟁이 본격화됩니다.",s:"업계 분석 · 3차"},
+  {y:"2027",k:"hyp",t:"CDU 운영 소프트웨어 차별화",d:"장비 용량이 평준화되면 원격 계측, 예지 정비, 칠러 연동 제어가 경쟁 요소가 될 것으로 봅니다.",s:"전략 가설"}
+ ]},
+ {name:"시설·Retrofit", events:[
+  {y:"2026",k:"fact",t:"평균 Rack 27 kW",d:"평균 밀도는 올랐지만 50~70 kW를 지원할 준비가 된 운영자는 5곳 중 1곳뿐입니다. 이 격차가 Retrofit 시장입니다.",s:"Uptime 조사 인용 · 1차"},
+  {y:"2026",k:"fact",t:"Rubin NVL72 200 kW 이상",d:"차세대 Rack이 200 kW를 넘으며 신축 시설은 처음부터 액체냉각으로 설계해야 합니다.",s:"Schneider · Jabil · 1차·2차"},
+  {y:"2027",k:"plan",t:"Rubin Ultra 약 600 kW",d:"다음 세대 Rack은 600 kW 수준이 예상됩니다. 기존 시설의 부분 개조로는 대응이 어려워 전용 구역 신설이 필요합니다.",s:"Jabil · 2차"},
+  {y:"2028",k:"hyp",t:"온수 냉각 확산",d:"칠러 없이 온수로 냉각하는 설계가 확산되면 시설 에너지는 줄지만 패키지 안 열저항 요구는 더 엄격해집니다.",s:"전략 가설"}
+ ]}
+];
+const lanes=document.getElementById("lanes"), det=document.getElementById("evdetail");
+let html='<div class="yr"></div>'+YEARS.map(y=>`<div class="yr${y==="2026"?" now":""}">${y}${y==="2026"?" (현재)":""}</div>`).join("");
+LANES.forEach((L,li)=>{
+  const last=li===LANES.length-1?" last":"";
+  html+=`<div class="lname${last}">${L.name}</div>`;
+  YEARS.forEach(y=>{html+=`<div class="cell${last}">`+L.events.map((e,ei)=>e.y===y?`<button type="button" class="ev ${e.k}" data-l="${li}" data-e="${ei}" aria-pressed="false">${e.t}</button>`:"").join("")+`</div>`;});
+});
+lanes.innerHTML=html;
+const KIND={fact:"확인된 사실",plan:"기업 계획·목표",hyp:"업계 전망·가설"};
+function pick(li,ei){
+  const e=LANES[li].events[ei];
+  lanes.querySelectorAll(".ev").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.l==li&&b.dataset.e==ei)?"true":"false"));
+  det.innerHTML=`<h4>${LANES[li].name} · ${e.y} · ${e.t}</h4><p style="margin:0">${e.d}</p><p class="src">${KIND[e.k]} · ${e.s}</p>`;
+}
+lanes.addEventListener("click",ev=>{const b=ev.target.closest(".ev");if(b)pick(+b.dataset.l,+b.dataset.e);});
+pick(1,1);
+
+const POS=[["lead","선도","양산 주력 공급"],["grow","확대","점유 확대 중"],["enter","진입","신규 인증·초기 공급"],["early","초기 기술","차세대 방식"]];
+const SEGS=[
+ {id:"cp",name:"Cold Plate · Spreader",desc:"칩 인접 방열 부품"},
+ {id:"qd",name:"퀵커넥터 · 매니폴드",desc:"Rack 내 냉각수 분배"},
+ {id:"cdu",name:"CDU",desc:"냉각수 온도·압력·유량 제어"},
+ {id:"fac",name:"시설 · 통합",desc:"칠러 · 열 방출 · Rack 통합"},
+ {id:"imm",name:"액침 · 냉각액",desc:"액침 탱크 · 절연 냉각액"}
+];
+const CN={KR:"한국",TW:"대만",US:"미국",EU:"유럽",CN:"중국"};
+const COS=[
+ {seg:"cp",pos:"lead",n:"AVC",c:"TW",role:"GPU용 Cold Plate 주력 공급",sig:"Rubin Cold Plate 지명 공급사. 3분기 출하 시작, AWS·Google·Meta·OpenAI ASIC 공급망 진입",g:"2차",imp:"NVIDIA와 ASIC 양쪽을 확보한 기준 기업. 명단 밖 기업의 벤치마크"},
+ {seg:"cp",pos:"lead",n:"Cooler Master",c:"TW",role:"Cold Plate와 CDU 핵심 부품",sig:"Rubin Cold Plate 지명 공급사",g:"2차",imp:"부품과 CDU를 함께 다루는 수직 통합 사례"},
+ {seg:"cp",pos:"lead",n:"Jentech",c:"TW",role:"Heat Spreader·Vapor Chamber",sig:"Rubin Cold Plate 지명 공급사이며 Heat Spreader 단독 공급으로 보도",g:"2차",imp:"패키지와 냉각의 접점을 쥔 기업. 기판 Warpage 문제와 직접 연결"},
+ {seg:"cp",pos:"lead",n:"Delta",c:"TW",role:"Cold Plate, CDU, 전력 변환",sig:"Rubin Cold Plate 지명 공급사. 2.4 MW·3 MW CDU 공개",g:"2차·3차",imp:"전력과 냉각을 함께 공급하는 풀스택 경쟁자"},
+ {seg:"cp",pos:"grow",n:"Auras",c:"TW",role:"Cold Plate와 퀵커넥터",sig:"Rubin Cold Plate 모듈 3분기 출하 예상",g:"3차",imp:"부품 조합 공급으로 점유 확대"},
+ {seg:"cp",pos:"grow",n:"Boyd",c:"US",role:"열관리 부품과 Cold Plate",sig:"Cold Plate 주요 공급사로 거론",g:"2차",imp:"대만 외 대안 공급원"},
+ {seg:"cp",pos:"enter",n:"Envicool",c:"CN",role:"Cold Plate, 퀵커넥터, CDU",sig:"Google 맞춤형 CDU 공급망 참여로 보도",g:"3차",imp:"중국 공급망의 하이퍼스케일러 진입 사례"},
+
+ {seg:"qd",pos:"lead",n:"Stäubli",c:"EU",role:"UQD·MQD 퀵커넥터",sig:"OCP 규격 기반 UQD와 Rubin 사양에 맞춘 MQD 공급을 공식 발표",g:"1차",imp:"규격 호환과 누수 신뢰성이 진입 장벽임을 보여주는 기업"},
+ {seg:"qd",pos:"lead",n:"Parker Hannifin",c:"US",role:"유체 연결 부품",sig:"차세대 대구경 퀵커넥터 공급사로 거론",g:"2차",imp:"유량 증가의 직접 수혜"},
+ {seg:"qd",pos:"lead",n:"CPC",c:"US",role:"퀵커넥터",sig:"Rack 전반 퀵커넥터 규격 공급사로 거론",g:"2차·3차",imp:"표준 부품 공급 구도 형성"},
+ {seg:"qd",pos:"grow",n:"Danfoss",c:"EU",role:"퀵커넥터와 유체 부품",sig:"대구경 퀵커넥터 공급사로 거론",g:"2차",imp:"산업용 유체 역량을 데이터센터로 확장"},
+
+ {seg:"cdu",pos:"lead",n:"Vertiv",c:"US",role:"CDU부터 칠러·전력까지 통합",sig:"70 kW~2.3 MW 범위 CDU와 시설 인프라 통합",g:"3차",imp:"통합 공급의 표준 경쟁자"},
+ {seg:"cdu",pos:"lead",n:"Schneider (Motivair)",c:"EU",role:"CDU, Cold Plate, 칩부터 칠러까지",sig:"Motivair 인수로 CDU 확보. 105 kW~2.5 MW 범위 공개",g:"1차·3차",imp:"인수합병으로 통합한 대표 사례"},
+ {seg:"cdu",pos:"grow",n:"nVent",c:"US",role:"Rack·Row CDU, 매니폴드",sig:"800 kW 이상 CDU와 Rack 인프라 결합",g:"3차",imp:"Rack 인프라 기반의 확장 모델"},
+ {seg:"cdu",pos:"grow",n:"CoolIT (Ecolab)",c:"US",role:"직접 액체냉각 전문",sig:"Ecolab이 47억 5천만 달러에 인수 완료(2026.07)",g:"3차",imp:"수처리 기업의 냉각 진입. 냉각수 관리 서비스와 결합 가능"},
+ {seg:"cdu",pos:"grow",n:"LG전자",c:"KR",role:"CDU, 칠러, 통합 관리 소프트웨어",sig:"600 kW NVIDIA 품질 인증(7월), 1 MW·2.5 MW DSX Ready 승인(9월). 상반기 냉각 수주 약 6,000억 원",g:"2차",imp:"국내 유일의 MW급 인증 CDU 라인업. 칠러까지 묶은 통합 공급이 강점"},
+
+ {seg:"fac",pos:"lead",n:"Foxconn · Quanta",c:"TW",role:"AI Rack 통합 조립",sig:"Rubin Rack 통합 조립의 주력으로 거론. Foxconn은 4분기 Rack 출하 확인",g:"3차",imp:"냉각 부품 채택을 사실상 결정하는 통합 단계"},
+ {seg:"fac",pos:"grow",n:"LG전자 (칠러)",c:"KR",role:"대용량 칠러와 공조 핵심 부품",sig:"AI 데이터센터용 대용량 터보 칠러 출시, 저 GWP 냉매 적용",g:"2차",imp:"칠러에서 CDU까지 일괄 공급 가능한 국내 기업"},
+
+ {seg:"imm",pos:"grow",n:"GRC",c:"US",role:"액침냉각 탱크 시스템",sig:"LG전자와 액침 탱크 시스템 공동 개발",g:"1차",imp:"국내 기업과의 협력 사례"},
+ {seg:"imm",pos:"enter",n:"SK엔무브",c:"KR",role:"액침 냉각액, 차세대 열관리 소재",sig:"LG전자와 액침 냉각액 공동 개발, 친환경 냉매 공동 개발 협력",g:"1차·2차",imp:"정유·윤활 역량으로 냉각액 시장에 진입하는 국내 사례"},
+ {seg:"imm",pos:"early",n:"LiquidStack",c:"US",role:"2-phase 액침냉각",sig:"액체냉각 시장 주요 기업 목록에 포함",g:"3차",imp:"상변화 방식의 기술 옵션"}
+];
+const vc=document.getElementById("vc"), cd=document.getElementById("codetail"), cf=document.getElementById("cfilter");
+let vh='<div class="hd">영역</div>'+POS.map(p=>`<div class="hd">${p[1]}<small>${p[2]}</small></div>`).join("");
+SEGS.forEach((sg,si)=>{
+  const last=si===SEGS.length-1?" row-last":"";
+  vh+=`<div class="seg-name${last}"><b>${sg.name}</b><span>${sg.desc}</span></div>`;
+  POS.forEach(p=>{vh+=`<div class="slot${last}">`+COS.map((c,i)=>c.seg===sg.id&&c.pos===p[0]?`<button type="button" class="co${c.c==="KR"?" kr":""}" data-i="${i}" data-c="${c.c}" aria-pressed="false"><abbr title="${CN[c.c]}">${c.c}</abbr>${c.n}</button>`:"").join("")+`</div>`;});
+});
+vc.innerHTML=vh;
+function coPick(i){
+  const c=COS[i], sg=SEGS.find(x=>x.id===c.seg), p=POS.find(x=>x[0]===c.pos);
+  vc.querySelectorAll(".co").forEach(b=>b.setAttribute("aria-pressed",b.dataset.i==i?"true":"false"));
+  cd.innerHTML=`<div><h4>${c.n}</h4><div class="sub">${CN[c.c]} · ${sg.name} · ${p[1]}</div><dl><dt>역할</dt><dd>${c.role}</dd><dt>최근 신호</dt><dd>${c.sig}</dd><dt>근거 등급</dt><dd>${c.g}</dd></dl></div><div class="impl"><b>엔지니어 관점 포인트</b>${c.imp}</div>`;
+}
+vc.addEventListener("click",e=>{const b=e.target.closest(".co");if(b)coPick(+b.dataset.i);});
+["전체","KR","TW","US","EU","CN"].forEach((k,idx)=>{
+  const b=document.createElement("button");b.type="button";b.textContent=k==="전체"?"전체":CN[k];
+  b.setAttribute("aria-pressed",idx===0?"true":"false");
+  b.addEventListener("click",()=>{cf.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");vc.querySelectorAll(".co").forEach(el=>el.classList.toggle("dim",k!=="전체"&&el.dataset.c!==k));});
+  cf.appendChild(b);
+});
+coPick(COS.findIndex(c=>c.n==="LG전자"));
+</script>
+</body>
+</html>
